@@ -1,0 +1,677 @@
+/*
+ * アプリ本体(画面遷移とロジック)
+ * ----------------------------------------------------------------------------
+ * 依存: content.js / srs.js / storage.js / charts.js (この順に読み込む)
+ * ----------------------------------------------------------------------------
+ */
+(function () {
+  const { SUBJECTS, CROSS_TOPICS } = window.SHARO;
+  const DAY = window.SRS.DAY;
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  // 組み込みテーマ + インポートしたカスタムテーマ
+  function topics() {
+    return CROSS_TOPICS.concat(window.Store.getCustomTopics());
+  }
+
+  // ---- 全カードを平坦化したインデックス -----------------------------------
+  function allCards() {
+    const out = [];
+    topics().forEach((topic) => {
+      topic.cards.forEach((card, idx) => {
+        out.push({ topic, idx, card, key: window.Store.cardKey(topic.id, idx) });
+      });
+    });
+    return out;
+  }
+
+  function withState(list, now) {
+    return list.map((c) => ({
+      ...c,
+      state: window.Store.getCardState(c.topic.id, c.idx),
+    }));
+  }
+
+  // ---- 統計 ----------------------------------------------------------------
+  function computeStats(now) {
+    const cards = withState(allCards(), now);
+    const studied = cards.filter((c) => c.state.last);
+    const due = cards.filter((c) => window.SRS.isDue(c.state, now));
+    const avgRet = studied.length
+      ? studied.reduce((s, c) => s + window.SRS.retention(c.state, now), 0) / studied.length
+      : 0;
+    const mature = cards.filter((c) => window.SRS.maturity(c.state) === 'mature').length;
+    const weak = cards.filter((c) => window.SRS.isWeak(c.state)).length;
+    return {
+      total: cards.length,
+      studied: studied.length,
+      due: due.length,
+      avgRet,
+      mature,
+      weak,
+      streak: computeStreak(),
+    };
+  }
+
+  function computeStreak() {
+    const log = window.Store.getLog();
+    if (!log.length) return 0;
+    const dayKeys = new Set(log.map((e) => new Date(e.t).toDateString()));
+    let streak = 0;
+    const d = new Date();
+    // 今日学習していなくても、昨日まで続いていれば途切れ判定は今日基準で
+    for (;;) {
+      if (dayKeys.has(d.toDateString())) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else if (streak === 0 && d.toDateString() === new Date().toDateString()) {
+        // 今日まだなら昨日を見る
+        d.setDate(d.getDate() - 1);
+        if (!dayKeys.has(d.toDateString())) break;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  // ============================ テーマ(ダーク/ライト) =====================
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('sharo.theme', t); } catch (e) {}
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#3b82f6');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+  }
+
+  // ============================ 復習リマインダー ============================
+  const Notify = {
+    supported() { return 'Notification' in window; },
+    enabled() { return !!window.Store.getSettings().remind; },
+    async enable() {
+      if (!this.supported()) return false;
+      let p = Notification.permission;
+      if (p === 'default') p = await Notification.requestPermission();
+      if (p === 'granted') { window.Store.setSetting('remind', true); return true; }
+      return false;
+    },
+    disable() { window.Store.setSetting('remind', false); },
+    // 1日1回だけ、未学習の復習があれば通知
+    maybeNotify(dueCount) {
+      if (!this.enabled() || dueCount <= 0) return;
+      if (!this.supported() || Notification.permission !== 'granted') return;
+      const today = new Date().toDateString();
+      if (window.Store.getSettings().lastNotified === today) return;
+      window.Store.setSetting('lastNotified', today);
+      try {
+        new Notification('社労士 横断マスター', {
+          body: `今日の復習が${dueCount}枚あります。`,
+          icon: './icons/icon.svg',
+        });
+      } catch (e) {}
+    },
+  };
+
+  // ============================ ホーム ======================================
+  function renderHome(now) {
+    const s = computeStats(now);
+    const view = $('#view');
+    view.innerHTML = `
+      <section class="hero">
+        <h2>横断学習で、点をつなぐ。</h2>
+        <p class="muted">科目をまたいで比較 → アクティブリコールで定着 → 忘却曲線で復習</p>
+      </section>
+      ${s.due > 0 ? `
+      <div class="due-banner">
+        <span class="db-ico">⏰</span>
+        <span class="db-text">今日の復習が <b>${s.due}枚</b> たまっています。忘れる前に思い出そう。</span>
+        <button class="db-go" id="banner-go">復習</button>
+      </div>` : ''}
+      <div class="stat-grid">
+        <div class="stat"><div class="stat-num">${s.due}</div><div class="stat-lbl">今日の復習</div></div>
+        <div class="stat"><div class="stat-num">${Math.round(s.avgRet * 100)}<small>%</small></div><div class="stat-lbl">平均記憶定着</div></div>
+        <div class="stat"><div class="stat-num">${s.studied}<small>/${s.total}</small></div><div class="stat-lbl">学習済カード</div></div>
+        <div class="stat"><div class="stat-num">${s.streak}<small>日</small></div><div class="stat-lbl">連続学習</div></div>
+      </div>
+      <button class="btn-primary big" id="start-review">
+        ${s.due > 0 ? `復習をはじめる(${s.due}枚)` : '新しいカードを学ぶ'}
+      </button>
+      ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
+        🔁 間違えた問題だけ復習(${s.weak}枚)
+      </button>` : ''}
+      <div class="card-box">
+        <h3>記憶の予測カーブ</h3>
+        <p class="muted small">学習済カードの平均保持率が今後どう下がるか</p>
+        <canvas id="home-curve" class="chart"></canvas>
+      </div>
+      <div class="card-box">
+        <h3>横断テーマ</h3>
+        <div class="topic-mini">
+          ${topics().map((t) => `<button class="chip" data-topic="${t.id}">${t.title}</button>`).join('')}
+        </div>
+      </div>`;
+
+    $('#start-review').addEventListener('click', () => go('review'));
+    const weakBtn = $('#start-weak');
+    if (weakBtn) weakBtn.addEventListener('click', () => go('review', { weak: true }));
+    const banner = $('#banner-go');
+    if (banner) banner.addEventListener('click', () => go('review'));
+    $$('.chip', view).forEach((b) =>
+      b.addEventListener('click', () => go('cross', { topic: b.dataset.topic })));
+
+    // 1日1回の復習リマインド(通知ON時のみ)
+    Notify.maybeNotify(s.due);
+
+    // 平均カーブ(代表 = 学習済カードの平均 stability)
+    const cards = withState(allCards(), now).filter((c) => c.state.last);
+    if (cards.length) {
+      const avgStab = cards.reduce((a, c) => a + c.state.stability, 0) / cards.length;
+      window.Charts.forgettingCurve($('#home-curve'),
+        [{ stability: avgStab, last: now, color: '#3b82f6' }], now, Math.max(7, avgStab * 2));
+    } else {
+      window.Charts.forgettingCurve($('#home-curve'),
+        [{ stability: 1, last: now, color: '#cbd5e1', dim: true }], now, 14);
+    }
+  }
+
+  // ============================ 横断学習 ====================================
+  function renderCross(now, params) {
+    const view = $('#view');
+    const topicId = params && params.topic;
+    if (!topicId) {
+      view.innerHTML = `
+        <section class="hero compact"><h2>横断テーマ</h2>
+          <p class="muted">科目をまたいで「同じ論点」を並べて覚える</p></section>
+        <div class="topic-list">
+          ${topics().map((t) => topicCardHTML(t, now)).join('')}
+        </div>`;
+      $$('.topic-card', view).forEach((el) =>
+        el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
+      return;
+    }
+
+    const topic = topics().find((t) => t.id === topicId);
+    view.innerHTML = `
+      <button class="link-back" id="back">← テーマ一覧</button>
+      <section class="hero compact">
+        <h2>${topic.title}</h2>
+        <p class="muted">${topic.tagline}</p>
+        <div class="subj-tags">${topic.subjects.map(subjTag).join('')}</div>
+      </section>
+      <div class="card-box">
+        ${topic.table ? `
+        <div class="table-wrap">
+          <table class="cmp">
+            <thead><tr>${topic.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+            <tbody>${topic.table.rows.map((r) =>
+              `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="rowhdr"' : ''}>${c}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
+        ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
+      </div>
+      <button class="btn-primary big" id="study-topic">このテーマを復習(${topic.cards.length}枚)</button>`;
+
+    $('#back').addEventListener('click', () => go('cross'));
+    $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
+  }
+
+  function topicCardHTML(t, now) {
+    const cards = withState(t.cards.map((card, idx) => ({ topic: t, idx, card })), now);
+    const studied = cards.filter((c) => c.state.last).length;
+    const ret = studied
+      ? Math.round(cards.filter((c) => c.state.last)
+          .reduce((a, c) => a + window.SRS.retention(c.state, now), 0) / studied * 100)
+      : 0;
+    return `
+      <div class="topic-card" data-topic="${t.id}">
+        <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}枚</span></div>
+        <p class="muted small">${t.tagline}</p>
+        <div class="subj-tags">${t.subjects.map(subjTag).join('')}</div>
+        <div class="topic-prog">
+          <div class="mini-track"><div class="mini-fill" style="width:${cards.length ? studied / cards.length * 100 : 0}%"></div></div>
+          <span class="small muted">${studied}/${cards.length} 学習 ・ 定着${ret}%</span>
+        </div>
+      </div>`;
+  }
+
+  function subjTag(id) {
+    const s = SUBJECTS[id];
+    if (!s) return '';
+    return `<span class="subj" style="--c:${s.color}">${s.short}</span>`;
+  }
+
+  // ============================ 復習(アクティブリコール) ==================
+  let session = null;
+
+  function buildQueue(now, opts) {
+    const topicId = opts && opts.topic;
+    let cards = withState(allCards(), now);
+    if (topicId) cards = cards.filter((c) => c.topic.id === topicId);
+
+    // 苦手モード: 期限を問わず「間違えた問題」を苦手な順(忘れた回数→低保持率)に
+    if (opts && opts.weak) {
+      return cards
+        .filter((c) => window.SRS.isWeak(c.state))
+        .sort((a, b) =>
+          (b.state.lapses || 0) - (a.state.lapses || 0) ||
+          window.SRS.retention(a.state, now) - window.SRS.retention(b.state, now))
+        .slice(0, 30);
+    }
+
+    const due = cards.filter((c) => c.state.last && window.SRS.isDue(c.state, now));
+    const fresh = cards.filter((c) => !c.state.last);
+    // 期限切れがひどい順 → 新規 の順に。1セッション最大20枚
+    due.sort((a, b) => a.state.due - b.state.due);
+    return [...due, ...fresh].slice(0, 20);
+  }
+
+  function renderReview(now, params) {
+    const weak = !!(params && params.weak);
+    const queue = buildQueue(now, { topic: params && params.topic, weak });
+    session = {
+      queue, pos: 0, revealed: false, done: 0, again: 0,
+      topicId: params && params.topic, weak,
+    };
+    drawReview();
+  }
+
+  function drawReview() {
+    const view = $('#view');
+    const now = Date.now();
+    if (session.pos >= session.queue.length) {
+      const empty = session.done === 0;
+      view.innerHTML = `
+        <section class="done">
+          <div class="done-emoji">${empty ? '✅' : '🎉'}</div>
+          <h2>${empty ? '対象がありません' : (session.weak ? '苦手復習 完了!' : 'セッション完了!')}</h2>
+          <p class="muted">${empty
+            ? (session.weak ? 'いまは間違えた問題がありません。' : '復習できるカードがありません。')
+            : `${session.done}枚を復習 ・ うち「忘れた」${session.again}枚`}</p>
+          <div class="done-actions">
+            ${empty ? '' : `<button class="btn-primary" id="more">続けて復習</button>`}
+            <button class="btn-ghost" id="to-home">ホームへ</button>
+            <button class="btn-ghost" id="to-growth">成長を見る</button>
+          </div>
+        </section>`;
+      const more = $('#more');
+      if (more) more.addEventListener('click', () =>
+        renderReview(Date.now(), { topic: session.topicId, weak: session.weak }));
+      $('#to-home').addEventListener('click', () => go('home'));
+      $('#to-growth').addEventListener('click', () => go('growth'));
+      return;
+    }
+
+    const item = session.queue[session.pos];
+    const total = session.queue.length;
+    const card = item.card;
+    const ret = item.state.last ? Math.round(window.SRS.retention(item.state, now) * 100) : null;
+
+    view.innerHTML = `
+      <div class="rv-top">
+        ${session.weak ? '<span class="mode-badge">🔁 苦手</span>' : ''}
+        <div class="rv-progress"><div class="rv-fill" style="width:${session.pos / total * 100}%"></div></div>
+        <span class="small muted">${session.pos + 1} / ${total}</span>
+      </div>
+      <div class="recall">
+        <div class="recall-meta">
+          <span class="subj-line">${item.topic.subjects.map(subjTag).join('')}</span>
+          <span class="topic-name">${item.topic.title}</span>
+          ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
+          ${ret !== null ? `<span class="ret-badge">記憶 ${ret}%</span>` : '<span class="ret-badge new">NEW</span>'}
+        </div>
+        <div class="q">${card.q}</div>
+        ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
+        <div class="a ${session.revealed ? 'show' : ''}" id="answer">${card.a}</div>
+      </div>
+      <div class="rv-actions">
+        ${session.revealed
+          ? Object.entries(window.SRS.GRADES).map(([id, g]) =>
+              `<button class="grade" data-grade="${id}" style="--c:${g.color}">
+                 <span class="g-label">${g.label}</span></button>`).join('')
+          : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
+      </div>`;
+
+    if (card.hint) {
+      const h = $('#hint');
+      if (h) h.addEventListener('click', () => { h.textContent = '💡 ' + card.hint; h.classList.add('open'); });
+    }
+    if (!session.revealed) {
+      $('#reveal').addEventListener('click', () => { session.revealed = true; drawReview(); });
+    } else {
+      $$('.grade', view).forEach((b) =>
+        b.addEventListener('click', () => gradeCard(b.dataset.grade)));
+      // キーボード 1..4
+      document.onkeydown = (e) => {
+        const map = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
+        if (map[e.key]) gradeCard(map[e.key]);
+      };
+    }
+    if (!session.revealed) {
+      document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); session.revealed = true; drawReview(); } };
+    }
+  }
+
+  function gradeCard(gradeId) {
+    document.onkeydown = null;
+    const now = Date.now();
+    const item = session.queue[session.pos];
+    const newState = window.SRS.review(item.state, gradeId, now);
+    window.Store.setCardState(item.topic.id, item.idx, newState);
+    window.Store.logReview({
+      t: now, topic: item.topic.id, idx: item.idx,
+      grade: gradeId, stability: newState.stability,
+      retention: item.state.last ? window.SRS.retention(item.state, now) : 0,
+    });
+    session.done++;
+    if (gradeId === 'again') {
+      session.again++;
+      // 「忘れた」カードはセッション末尾に積み直す
+      session.queue.push({ ...item, state: newState });
+    }
+    session.pos++;
+    session.revealed = false;
+    drawReview();
+  }
+
+  // ============================ 成長度 ======================================
+  function renderGrowth(now) {
+    const view = $('#view');
+    const s = computeStats(now);
+    view.innerHTML = `
+      <section class="hero compact"><h2>成長と忘却の可視化</h2>
+        <p class="muted">学習の積み上げと、これからの忘れ方</p></section>
+
+      <div class="stat-grid tight">
+        <div class="stat"><div class="stat-num">${s.studied}</div><div class="stat-lbl">学習済</div></div>
+        <div class="stat"><div class="stat-num">${s.mature}</div><div class="stat-lbl">定着(長期)</div></div>
+        <div class="stat"><div class="stat-num">${Math.round(s.avgRet * 100)}<small>%</small></div><div class="stat-lbl">平均保持率</div></div>
+      </div>
+
+      <div class="card-box">
+        <h3>学習量の推移</h3>
+        <p class="muted small">日別の復習回数(直近30日)</p>
+        <canvas id="growth-line" class="chart"></canvas>
+      </div>
+
+      <div class="card-box">
+        <h3>忘却曲線(代表カード)</h3>
+        <p class="muted small">よく復習したカードほど右肩でゆるやかに(忘れにくく)なる</p>
+        <canvas id="growth-curve" class="chart tall"></canvas>
+      </div>
+
+      <div class="card-box">
+        <h3>科目別 習得度</h3>
+        <div id="mastery" class="bars"></div>
+      </div>
+
+      <div class="card-box">
+        <h3>設定</h3>
+        <div class="setting-row">
+          <span class="sr-label">復習リマインド
+            <span class="sr-sub">${Notify.supported()
+              ? 'アプリを開いた時に、未消化の復習を1日1回通知します'
+              : 'お使いのブラウザは通知に対応していません'}</span>
+          </span>
+          <label class="switch">
+            <input type="checkbox" id="remind-toggle" ${Notify.enabled() ? 'checked' : ''} ${Notify.supported() ? '' : 'disabled'} />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>問題のインポート</h3>
+        <p class="muted small">CSV / JSON で自作問題や過去問をまとめて追加できます${
+          customCount() ? `(現在 <b>${customCount()}</b> 件のインポート済みテーマ)` : ''}</p>
+        <div class="data-actions">
+          <button class="btn-primary" id="import-open">問題をインポート</button>
+          ${customCount() ? '<button class="btn-ghost danger" id="custom-clear">インポート分を削除</button>' : ''}
+        </div>
+      </div>
+
+      <div class="card-box">
+        <h3>データ管理</h3>
+        <div class="data-actions">
+          <button class="btn-ghost" id="export">バックアップを書き出す</button>
+          <button class="btn-ghost danger" id="reset">学習記録をリセット</button>
+        </div>
+      </div>`;
+
+    // 学習量の推移
+    window.Charts.growthLine($('#growth-line'), dailySeries(30));
+
+    // 忘却曲線: 学習済カードのうち stability 上位3枚を代表に
+    const studied = withState(allCards(), now).filter((c) => c.state.last);
+    studied.sort((a, b) => b.state.stability - a.state.stability);
+    const palette = ['#3b82f6', '#22c55e', '#f59e0b'];
+    const curves = studied.slice(0, 3).map((c, i) => ({
+      stability: c.state.stability, last: c.state.last, color: palette[i],
+    }));
+    if (!curves.length) curves.push({ stability: 1, last: now, color: '#cbd5e1', dim: true });
+    const horizon = Math.max(14, ...curves.map((c) => c.stability)) * 1.5;
+    window.Charts.forgettingCurve($('#growth-curve'), curves, now, horizon);
+
+    // 科目別習得度
+    window.Charts.masteryBars($('#mastery'), subjectMastery(now));
+
+    const remind = $('#remind-toggle');
+    if (remind) {
+      remind.addEventListener('change', async () => {
+        if (remind.checked) {
+          const ok = await Notify.enable();
+          if (!ok) { remind.checked = false; alert('通知が許可されませんでした。ブラウザの設定をご確認ください。'); }
+        } else {
+          Notify.disable();
+        }
+      });
+    }
+
+    $('#import-open').addEventListener('click', openImport);
+    const clearBtn = $('#custom-clear');
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      if (confirm('インポートした問題をすべて削除します。よろしいですか?(組み込みの問題は残ります)')) {
+        window.Store.setCustomTopics([]);
+        renderGrowth(Date.now());
+      }
+    });
+
+    $('#export').addEventListener('click', exportData);
+    $('#reset').addEventListener('click', () => {
+      if (confirm('すべての学習記録を消します。よろしいですか?')) {
+        window.Store.reset();
+        renderGrowth(Date.now());
+      }
+    });
+  }
+
+  function customCount() {
+    return window.Store.getCustomTopics().length;
+  }
+
+  // ============================ インポート画面 ==============================
+  const CSV_SAMPLE =
+`topic,subjects,question,answer,hint,source
+労働時間,労基|安衛,法定労働時間は1日何時間?,8時間,原則,R5択一
+労働時間,労基,法定労働時間は1週何時間?,40時間,,
+時効,健保|厚年,保険料を徴収する権利の時効は?,2年,,R4`;
+
+  // 既存IDと衝突しないよう採番してからカスタムテーマへ反映
+  function mergeCustom(newTopics, mode) {
+    const existing = mode === 'replace' ? [] : window.Store.getCustomTopics();
+    const ids = new Set(CROSS_TOPICS.map((t) => t.id).concat(existing.map((t) => t.id)));
+    newTopics.forEach((t) => {
+      let id = t.id, n = 1;
+      while (ids.has(id)) id = `${t.id}-${n++}`;
+      t.id = id; ids.add(id);
+    });
+    window.Store.setCustomTopics(existing.concat(newTopics));
+  }
+
+  function openImport() {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-label="問題のインポート">
+        <div class="modal-head">
+          <h3>問題のインポート</h3>
+          <button class="icon-btn" id="im-close" aria-label="閉じる">✕</button>
+        </div>
+        <p class="muted small">CSV または JSON を貼り付けるか、ファイルを選んでください(形式は自動判定)。</p>
+        <details class="im-help">
+          <summary>CSVの書式</summary>
+          <p class="muted small">1行目はヘッダー。<code>question</code> と <code>answer</code> は必須。<code>topic</code> が同じ行は1テーマにまとまります。<code>subjects</code> は <code>|</code> 区切り(例: 労基|健保)。</p>
+          <pre class="im-pre">${CSV_SAMPLE.replace(/</g, '&lt;')}</pre>
+          <button class="btn-ghost" id="im-sample">この例を入力欄に入れる</button>
+        </details>
+        <textarea id="im-text" class="im-text" placeholder="ここに CSV または JSON を貼り付け"></textarea>
+        <div class="im-row">
+          <input type="file" id="im-file" accept=".csv,.json,.txt,text/csv,application/json" />
+        </div>
+        <div class="im-row im-modes">
+          <label><input type="radio" name="im-mode" value="append" checked /> 追加</label>
+          <label><input type="radio" name="im-mode" value="replace" /> 置き換え</label>
+        </div>
+        <div id="im-msg" class="im-msg"></div>
+        <div class="modal-actions">
+          <button class="btn-ghost" id="im-cancel">キャンセル</button>
+          <button class="btn-primary" id="im-run">取り込む</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    const msg = $('#im-msg', overlay);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    $('#im-close', overlay).addEventListener('click', close);
+    $('#im-cancel', overlay).addEventListener('click', close);
+    $('#im-sample', overlay).addEventListener('click', () => { $('#im-text', overlay).value = CSV_SAMPLE; });
+    $('#im-file', overlay).addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => { $('#im-text', overlay).value = r.result; };
+      r.readAsText(f);
+    });
+
+    $('#im-run', overlay).addEventListener('click', () => {
+      const text = $('#im-text', overlay).value;
+      let result;
+      try {
+        result = window.Importer.parse(text);
+      } catch (err) {
+        msg.className = 'im-msg error';
+        msg.textContent = '読み込みエラー: ' + err.message;
+        return;
+      }
+      if (!result.topics.length) {
+        msg.className = 'im-msg error';
+        msg.textContent = '取り込めるテーマがありませんでした。' + (result.errors[0] || '');
+        return;
+      }
+      const mode = (overlay.querySelector('input[name="im-mode"]:checked') || {}).value || 'append';
+      mergeCustom(result.topics, mode);
+      const cardTotal = result.topics.reduce((a, t) => a + t.cards.length, 0);
+      let info = `${result.topics.length}テーマ / ${cardTotal}枚を取り込みました。`;
+      if (result.errors.length) info += `(スキップ ${result.errors.length}件)`;
+      alert(info);
+      close();
+      renderGrowth(Date.now());
+    });
+  }
+
+  function dailySeries(nDays) {
+    const log = window.Store.getLog();
+    const counts = {};
+    log.forEach((e) => {
+      const k = new Date(e.t);
+      const key = `${k.getMonth() + 1}/${k.getDate()}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const out = [];
+    const d = new Date();
+    d.setDate(d.getDate() - (nDays - 1));
+    for (let i = 0; i < nDays; i++) {
+      const key = `${d.getMonth() + 1}/${d.getDate()}`;
+      out.push({ date: key, value: counts[key] || 0 });
+      d.setDate(d.getDate() + 1);
+    }
+    // 末尾の連続ゼロを削って見やすく(ただし最低1点は残す)
+    let end = out.length;
+    while (end > 1 && out[end - 1].value === 0) end--;
+    let start = 0;
+    while (start < end - 1 && out[start].value === 0) start++;
+    return out.slice(start, end);
+  }
+
+  function subjectMastery(now) {
+    // 各カードは複数科目に紐づく。科目ごとに保持率を平均する。
+    const acc = {};
+    withState(allCards(), now).forEach((c) => {
+      const ret = c.state.last ? window.SRS.retention(c.state, now) : 0;
+      c.topic.subjects.forEach((sid) => {
+        acc[sid] = acc[sid] || { sum: 0, n: 0, studied: 0 };
+        acc[sid].sum += ret;
+        acc[sid].n += 1;
+        if (c.state.last) acc[sid].studied += 1;
+      });
+    });
+    return Object.entries(acc)
+      .map(([sid, v]) => ({
+        label: SUBJECTS[sid].name,
+        color: SUBJECTS[sid].color,
+        value: v.n ? v.sum / v.n : 0,
+        count: v.studied,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  function exportData() {
+    const blob = new Blob([window.Store.exportJSON()], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sharo-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ============================ ルーティング ================================
+  const ROUTES = {
+    home: renderHome,
+    cross: renderCross,
+    review: renderReview,
+    growth: renderGrowth,
+  };
+
+  function go(route, params) {
+    document.onkeydown = null;
+    $$('.nav-item').forEach((n) => n.classList.toggle('active', n.dataset.route === route));
+    window.scrollTo(0, 0);
+    ROUTES[route](Date.now(), params);
+  }
+
+  function init() {
+    // テーマ切替(初期アイコン反映 + クリックで反転)
+    applyTheme(currentTheme());
+    const tt = document.getElementById('theme-toggle');
+    if (tt) tt.addEventListener('click', () =>
+      applyTheme(currentTheme() === 'dark' ? 'light' : 'dark'));
+
+    $$('.nav-item').forEach((n) =>
+      n.addEventListener('click', () => go(n.dataset.route)));
+    go('home');
+
+    // Service Worker(PWA)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
