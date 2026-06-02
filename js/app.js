@@ -205,11 +205,20 @@
       </section>
       <div class="card-box">
         ${topic.table ? `
-        <div class="table-wrap">
+        <div class="sheet-bar">
+          <button class="chip2" id="sheet-toggle">🟥 赤シート ON</button>
+          <button class="chip2" id="reveal-all">全部表示</button>
+          <span class="sheet-hint small muted">タップで答え表示</span>
+        </div>
+        <div class="table-wrap sheet" id="cmp-wrap">
           <table class="cmp">
             <thead><tr>${topic.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
             <tbody>${topic.table.rows.map((r) =>
-              `<tr>${r.map((c, i) => `<td${i === 0 ? ' class="rowhdr"' : ''}>${c}</td>`).join('')}</tr>`).join('')}
+              `<tr>${r.map((c, i) => {
+                if (i === 0) return `<td class="rowhdr">${c}</td>`;
+                if (!c) return '<td></td>';
+                return `<td class="ans"><span class="mask">${c}</span></td>`;
+              }).join('')}</tr>`).join('')}
             </tbody>
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
@@ -219,6 +228,28 @@
 
     $('#back').addEventListener('click', () => go('cross'));
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
+
+    // 赤シート(答えを隠す/タップで表示)
+    if (topic.table) {
+      const wrap = $('#cmp-wrap');
+      const masks = $$('.mask', wrap);
+      let sheetOn = true;
+      let allShown = false;
+      const applySheet = () => {
+        wrap.classList.toggle('sheet', sheetOn);
+        $('#sheet-toggle').textContent = sheetOn ? '🟥 赤シート ON' : '⬜️ 赤シート OFF';
+        $('.sheet-hint').style.visibility = sheetOn ? 'visible' : 'hidden';
+      };
+      $('#sheet-toggle').addEventListener('click', () => { sheetOn = !sheetOn; applySheet(); });
+      $('#reveal-all').addEventListener('click', () => {
+        allShown = !allShown;
+        masks.forEach((m) => m.classList.toggle('revealed', allShown));
+        $('#reveal-all').textContent = allShown ? '全部隠す' : '全部表示';
+      });
+      masks.forEach((m) => m.addEventListener('click', () => {
+        if (sheetOn) m.classList.toggle('revealed');
+      }));
+    }
   }
 
   function topicCardHTML(t, now) {

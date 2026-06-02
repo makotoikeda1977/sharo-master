@@ -141,6 +141,24 @@ table.cmp td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-al
 table.cmp td.rowhdr { font-weight: 700; color: var(--ink); white-space: nowrap; }
 table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 
+/* ---- 赤シート(答えを隠す) ---- */
+.sheet-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.chip2 {
+  background: #eef2ff; color: var(--brand-d); border: none; border-radius: 99px;
+  padding: 7px 13px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.chip2:active { transform: scale(.96); }
+.sheet-hint { margin-left: auto; }
+table.cmp td.ans .mask {
+  border-radius: 4px; padding: 0 2px; transition: background .12s, color .12s;
+}
+/* シートON時: 答えを赤ブロックで隠す。タップで表示 */
+.sheet table.cmp td.ans .mask {
+  background: #e11d48; color: transparent; cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+.sheet table.cmp td.ans .mask.revealed { background: transparent; color: inherit; }
+
 /* ---- 復習(アクティブリコール) ---- */
 .rv-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
 .rv-progress { flex: 1; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
