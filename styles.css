@@ -143,6 +143,10 @@ table.cmp td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-al
 table.cmp td.rowhdr { font-weight: 700; color: var(--ink); white-space: normal; word-break: break-word; }
 table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 
+/* ---- 法律ごとの色分け(行) ---- */
+table.cmp tbody tr.lawrow td { background: color-mix(in srgb, var(--rowc) 13%, var(--surface)); }
+table.cmp tbody tr.lawrow td.rowhdr { box-shadow: inset 4px 0 0 var(--rowc); }
+
 /* ---- 赤シート(答えを隠す) ---- */
 .sheet-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .chip2 {

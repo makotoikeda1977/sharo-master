@@ -223,12 +223,17 @@
         <div class="table-wrap sheet" id="cmp-wrap">
           <table class="cmp">
             <thead><tr>${topic.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
-            <tbody>${topic.table.rows.map((r, ri) =>
-              `<tr>${r.map((c, i) => {
-                if (i === 0) return `<td class="rowhdr">${tableMistakes.includes(ri) ? '<span class="row-x">✗</span>' : ''}${c}</td>`;
-                if (!c) return '<td></td>';
-                return `<td class="ans"><span class="mask">${c}</span></td>`;
-              }).join('')}</tr>`).join('')}
+            <tbody>${topic.table.rows.map((r, ri) => {
+                const lc = rowLawColor(r[0]) ||
+                  (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]]
+                    ? SUBJECTS[topic.subjects[0]].color : null);
+                const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
+                return `<tr${trA}>${r.map((c, i) => {
+                  if (i === 0) return `<td class="rowhdr">${tableMistakes.includes(ri) ? '<span class="row-x">✗</span>' : ''}${c}</td>`;
+                  if (!c) return '<td></td>';
+                  return `<td class="ans"><span class="mask">${c}</span></td>`;
+                }).join('')}</tr>`;
+              }).join('')}
             </tbody>
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
@@ -376,6 +381,24 @@
     const s = SUBJECTS[id];
     if (!s) return '';
     return `<span class="subj" style="--c:${s.color}">${s.short}</span>`;
+  }
+
+  // 行の1列目の文言から「法律」を判定して色を割り当てる(順序が重要)
+  const LAW_COLORS = [
+    [/国民健康保険|後期高齢|介護保険|船員/, '#0ea5e9'],         // 社一系(国保・後期・介護・船員)
+    [/労働基準|労基/, SUBJECTS.kijun.color],
+    [/安全衛生|安衛/, SUBJECTS.anei.color],
+    [/労災/, SUBJECTS.rosai.color],
+    [/雇用/, SUBJECTS.koyo.color],
+    [/徴収|労働保険料/, SUBJECTS.choshu.color],
+    [/厚生年金|厚年/, SUBJECTS.konen.color],
+    [/国民年金|国年/, SUBJECTS.kokunen.color],
+    [/健康保険|健保/, SUBJECTS.kenpo.color],
+  ];
+  function rowLawColor(text) {
+    const t = String(text || '');
+    for (const [re, c] of LAW_COLORS) if (re.test(t)) return c;
+    return null;
   }
 
   // ============================ 復習(アクティブリコール) ==================
