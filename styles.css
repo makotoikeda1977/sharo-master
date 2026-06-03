@@ -87,6 +87,8 @@ body {
 .btn-ghost.danger { color: #dc2626; border-color: #fecaca; }
 .btn-ghost.big { width: 100%; padding: 14px; font-size: 15px; }
 .weak-btn { margin: -6px 0 16px; color: var(--brand-d); }
+.imp-btn { margin: -6px 0 16px; color: #7c3aed; }
+.mode-badge.imp { background: #8b5cf6; }
 .mode-badge {
   font-size: 11px; font-weight: 700; color: #fff; background: #f59e0b;
   border-radius: 99px; padding: 3px 10px; white-space: nowrap;
@@ -152,12 +154,41 @@ table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 table.cmp td.ans .mask {
   border-radius: 4px; padding: 0 2px; transition: background .12s, color .12s;
 }
-/* シートON時: 答えを赤ブロックで隠す。タップで表示 */
+/* シートON時: 答えを赤ブロックで隠す。長さは一律(答えを推測させない)。タップで表示 */
 .sheet table.cmp td.ans .mask {
+  display: inline-block;
+  width: 4.5em; max-width: 100%;
   background: #e11d48; color: transparent; cursor: pointer;
+  white-space: nowrap; overflow: hidden; vertical-align: bottom;
   -webkit-user-select: none; user-select: none;
 }
-.sheet table.cmp td.ans .mask.revealed { background: transparent; color: inherit; }
+.sheet table.cmp td.ans .mask.revealed {
+  display: inline; width: auto;
+  background: transparent; color: inherit;
+  white-space: normal; overflow: visible;
+}
+.row-x { color: #ef4444; font-weight: 800; margin-right: 5px; }
+
+/* ---- 表テスト ---- */
+.tt-prompt-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.tt-answers {
+  margin-top: auto; padding-top: 18px; border-top: 1px solid var(--line);
+  opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s;
+}
+.tt-answers.show { opacity: 1; transform: none; }
+.tt-ans-row { display: flex; gap: 10px; padding: 5px 0; }
+.tt-ans-label { font-size: 12px; color: var(--muted); min-width: 84px; flex: none; }
+.tt-ans-val { font-weight: 700; }
+.tt-actions { margin-top: 16px; }
+.tt-actions .btn-primary.big { margin-bottom: 0; }
+.tt-actions.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode-badge.tt { background: #3b82f6; }
+.tt-wrong {
+  text-align: left; background: var(--surface); border-radius: 12px;
+  padding: 12px 16px; margin: 14px auto 0; max-width: 360px; box-shadow: var(--shadow);
+}
+.tt-wrong ul { margin: 6px 0 0; padding-left: 18px; }
+.tt-wrong li { margin: 3px 0; }
 
 /* ---- 復習(アクティブリコール) ---- */
 .rv-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
