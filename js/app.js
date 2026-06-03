@@ -43,6 +43,8 @@
       : 0;
     const mature = cards.filter((c) => window.SRS.maturity(c.state) === 'mature').length;
     const weak = cards.filter((c) => window.SRS.isWeak(c.state)).length;
+    const importedCards = cards.filter((c) => c.topic.custom);
+    const importedReady = importedCards.filter((c) => !c.state.last || window.SRS.isDue(c.state, now)).length;
     return {
       total: cards.length,
       studied: studied.length,
@@ -50,6 +52,8 @@
       avgRet,
       mature,
       weak,
+      imported: importedReady,
+      importedTotal: importedCards.length,
       streak: computeStreak(),
     };
   }
@@ -144,6 +148,9 @@
       ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
         🔁 間違えた問題だけ復習(${s.weak}枚)
       </button>` : ''}
+      ${s.importedTotal > 0 ? `<button class="btn-ghost big imp-btn" id="start-imported">
+        📖 過去問だけ復習(${s.imported}枚)
+      </button>` : ''}
       <div class="card-box">
         <h3>記憶の予測カーブ</h3>
         <p class="muted small">学習済カードの平均保持率が今後どう下がるか</p>
@@ -159,6 +166,8 @@
     $('#start-review').addEventListener('click', () => go('review'));
     const weakBtn = $('#start-weak');
     if (weakBtn) weakBtn.addEventListener('click', () => go('review', { weak: true }));
+    const impBtn = $('#start-imported');
+    if (impBtn) impBtn.addEventListener('click', () => go('review', { imported: true }));
     const banner = $('#banner-go');
     if (banner) banner.addEventListener('click', () => go('review'));
     $$('.chip', view).forEach((b) =>
@@ -196,6 +205,7 @@
     }
 
     const topic = topics().find((t) => t.id === topicId);
+    const tableMistakes = ((window.Store.getSettings().tableMistakes || {})[topicId]) || [];
     view.innerHTML = `
       <button class="link-back" id="back">← テーマ一覧</button>
       <section class="hero compact">
@@ -213,9 +223,9 @@
         <div class="table-wrap sheet" id="cmp-wrap">
           <table class="cmp">
             <thead><tr>${topic.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
-            <tbody>${topic.table.rows.map((r) =>
+            <tbody>${topic.table.rows.map((r, ri) =>
               `<tr>${r.map((c, i) => {
-                if (i === 0) return `<td class="rowhdr">${c}</td>`;
+                if (i === 0) return `<td class="rowhdr">${tableMistakes.includes(ri) ? '<span class="row-x">✗</span>' : ''}${c}</td>`;
                 if (!c) return '<td></td>';
                 return `<td class="ans"><span class="mask">${c}</span></td>`;
               }).join('')}</tr>`).join('')}
@@ -224,7 +234,9 @@
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
         ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
       </div>
-      <button class="btn-primary big" id="study-topic">このテーマを復習(${topic.cards.length}枚)</button>`;
+      ${topic.table ? `<button class="btn-primary big" id="table-test">📝 この表でテスト(${topic.table.rows.length}行)</button>` : ''}
+      ${topic.table && tableMistakes.length ? `<button class="btn-ghost big" id="table-retry">🔁 前回の間違いだけ(${tableMistakes.length}行)</button>` : ''}
+      <button class="btn-${topic.table ? 'ghost' : 'primary'} big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
 
     $('#back').addEventListener('click', () => go('cross'));
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
@@ -249,7 +261,96 @@
       masks.forEach((m) => m.addEventListener('click', () => {
         if (sheetOn) m.classList.toggle('revealed');
       }));
+
+      // 表でテスト
+      $('#table-test').addEventListener('click', () =>
+        renderTableTest(topic, topic.table.rows.map((_, i) => i)));
+      const retry = $('#table-retry');
+      if (retry) retry.addEventListener('click', () => renderTableTest(topic, tableMistakes));
     }
+  }
+
+  // ============================ 表テスト(行ごとに○×) ======================
+  function renderTableTest(topic, rowIndexes) {
+    const headers = topic.table.headers;
+    const rows = rowIndexes.slice();
+    const ses = { pos: 0, revealed: false, results: {} };
+
+    function draw() {
+      if (ses.pos >= rows.length) return drawResult();
+      const rIdx = rows[ses.pos];
+      const row = topic.table.rows[rIdx];
+      const ansHTML = headers.slice(1).map((h, k) =>
+        `<div class="tt-ans-row"><span class="tt-ans-label">${h}</span><span class="tt-ans-val">${row[k + 1] || '—'}</span></div>`
+      ).join('');
+      $('#view').innerHTML = `
+        <button class="link-back" id="tt-back">← ${topic.title} に戻る</button>
+        <div class="rv-top">
+          <span class="mode-badge tt">📝 表テスト</span>
+          <div class="rv-progress"><div class="rv-fill" style="width:${ses.pos / rows.length * 100}%"></div></div>
+          <span class="small muted">${ses.pos + 1} / ${rows.length}</span>
+        </div>
+        <div class="recall">
+          <div class="recall-meta">
+            <span class="subj-line">${topic.subjects.map(subjTag).join('')}</span>
+            <span class="topic-name">${topic.title}</span>
+          </div>
+          <div class="tt-prompt-label">${headers[0]}</div>
+          <div class="q">${row[0]}</div>
+          <div class="tt-answers ${ses.revealed ? 'show' : ''}">${ansHTML}</div>
+        </div>
+        ${ses.revealed
+          ? `<div class="tt-actions two">
+               <button class="grade" data-ok="0" style="--c:#ef4444"><span class="g-label">✗ まちがえた</span></button>
+               <button class="grade" data-ok="1" style="--c:#22c55e"><span class="g-label">✓ 正解</span></button>
+             </div>`
+          : `<div class="tt-actions"><button class="btn-primary big" id="tt-reveal">答えを見る</button></div>`}`;
+      $('#tt-back').addEventListener('click', () => go('cross', { topic: topic.id }));
+      if (!ses.revealed) {
+        $('#tt-reveal').addEventListener('click', () => { ses.revealed = true; draw(); });
+      } else {
+        $$('.tt-actions .grade').forEach((b) => b.addEventListener('click', () => {
+          ses.results[rIdx] = b.dataset.ok === '1';
+          ses.pos++; ses.revealed = false; draw();
+        }));
+      }
+    }
+
+    function drawResult() {
+      const wrong = rows.filter((r) => !ses.results[r]);
+      const correct = rows.length - wrong.length;
+      const pct = Math.round(correct / rows.length * 100);
+      // 間違えた行を保存(次回この表を開くと ✗ 印が付く)
+      const tm = window.Store.getSettings().tableMistakes || {};
+      tm[topic.id] = wrong;
+      window.Store.setSetting('tableMistakes', tm);
+
+      const wrongList = wrong.map((r) => `<li>${topic.table.rows[r][0]}</li>`).join('');
+      $('#view').innerHTML = `
+        <button class="link-back" id="tt-back">← ${topic.title} に戻る</button>
+        <section class="done">
+          <div class="done-emoji">${wrong.length === 0 ? '💯' : '📊'}</div>
+          <h2>${correct} / ${rows.length} 正解(${pct}%)</h2>
+          ${wrong.length
+            ? `<div class="tt-wrong"><p class="muted small">間違えた項目</p><ul>${wrongList}</ul></div>`
+            : '<p class="muted">全問正解!すばらしい 🎉</p>'}
+          <div class="done-actions">
+            ${wrong.length ? `<button class="btn-primary" id="tt-retry-wrong">間違いだけもう一度(${wrong.length})</button>` : ''}
+            <button class="btn-ghost" id="tt-retry-all">最初から</button>
+            <button class="btn-ghost" id="tt-done">表に戻る</button>
+          </div>
+        </section>`;
+      $('#tt-back').addEventListener('click', () => go('cross', { topic: topic.id }));
+      $('#tt-done').addEventListener('click', () => go('cross', { topic: topic.id }));
+      $('#tt-retry-all').addEventListener('click', () =>
+        renderTableTest(topic, topic.table.rows.map((_, i) => i)));
+      const rw = $('#tt-retry-wrong');
+      if (rw) rw.addEventListener('click', () => renderTableTest(topic, wrong));
+    }
+
+    document.onkeydown = null;
+    window.scrollTo(0, 0);
+    draw();
   }
 
   function topicCardHTML(t, now) {
@@ -284,6 +385,8 @@
     const topicId = opts && opts.topic;
     let cards = withState(allCards(), now);
     if (topicId) cards = cards.filter((c) => c.topic.id === topicId);
+    // 過去問モード: インポートしたカードだけに絞る
+    if (opts && opts.imported) cards = cards.filter((c) => c.topic.custom);
 
     // 苦手モード: 期限を問わず「間違えた問題」を苦手な順(忘れた回数→低保持率)に
     if (opts && opts.weak) {
@@ -304,10 +407,11 @@
 
   function renderReview(now, params) {
     const weak = !!(params && params.weak);
-    const queue = buildQueue(now, { topic: params && params.topic, weak });
+    const imported = !!(params && params.imported);
+    const queue = buildQueue(now, { topic: params && params.topic, weak, imported });
     session = {
-      queue, pos: 0, revealed: false, done: 0, again: 0,
-      topicId: params && params.topic, weak,
+      queue, pos: 0, revealed: false, answered: null, done: 0, again: 0,
+      topicId: params && params.topic, weak, imported,
     };
     drawReview();
   }
@@ -332,7 +436,7 @@
         </section>`;
       const more = $('#more');
       if (more) more.addEventListener('click', () =>
-        renderReview(Date.now(), { topic: session.topicId, weak: session.weak }));
+        renderReview(Date.now(), { topic: session.topicId, weak: session.weak, imported: session.imported }));
       $('#to-home').addEventListener('click', () => go('home'));
       $('#to-growth').addEventListener('click', () => go('growth'));
       return;
@@ -342,10 +446,14 @@
     const total = session.queue.length;
     const card = item.card;
     const ret = item.state.last ? Math.round(window.SRS.retention(item.state, now) * 100) : null;
+    const ox = oxAnswer(card);          // '○' | '×' | null
+    const ans = session.answered;       // {choice, correct} | null
+    const showAnswer = session.revealed || !!ans;
 
     view.innerHTML = `
       <div class="rv-top">
         ${session.weak ? '<span class="mode-badge">🔁 苦手</span>' : ''}
+        ${session.imported ? '<span class="mode-badge imp">📖 過去問</span>' : ''}
         <div class="rv-progress"><div class="rv-fill" style="width:${session.pos / total * 100}%"></div></div>
         <span class="small muted">${session.pos + 1} / ${total}</span>
       </div>
@@ -358,34 +466,85 @@
         </div>
         <div class="q">${card.q}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
-        <div class="a ${session.revealed ? 'show' : ''}" id="answer">${card.a}</div>
+        ${ans ? `<div class="ox-result ${ans.correct ? 'ok' : 'ng'}">${ans.correct ? '○ 正解' : '× 不正解'}<span class="ox-correct">(正解: ${ox})</span></div>` : ''}
+        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.a}</div>
       </div>
       <div class="rv-actions">
-        ${session.revealed
-          ? Object.entries(window.SRS.GRADES).map(([id, g]) =>
-              `<button class="grade" data-grade="${id}" style="--c:${g.color}">
-                 <span class="g-label">${g.label}</span></button>`).join('')
-          : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
+        ${ans
+          ? `<button class="btn-primary big" id="next">次へ</button>`
+          : ox
+            ? `<div class="ox-buttons">
+                 <button class="ox-btn" data-ox="○" style="--c:#22c55e">○ 正しい</button>
+                 <button class="ox-btn" data-ox="×" style="--c:#ef4444">× 誤り</button>
+               </div>`
+            : session.revealed
+              ? Object.entries(window.SRS.GRADES).map(([id, g]) =>
+                  `<button class="grade" data-grade="${id}" style="--c:${g.color}">
+                     <span class="g-label">${g.label}</span></button>`).join('')
+              : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
       </div>`;
 
     if (card.hint) {
       const h = $('#hint');
       if (h) h.addEventListener('click', () => { h.textContent = '💡 ' + card.hint; h.classList.add('open'); });
     }
-    if (!session.revealed) {
-      $('#reveal').addEventListener('click', () => { session.revealed = true; drawReview(); });
-    } else {
-      $$('.grade', view).forEach((b) =>
-        b.addEventListener('click', () => gradeCard(b.dataset.grade)));
-      // キーボード 1..4
+    document.onkeydown = null;
+    if (ans) {
+      $('#next').addEventListener('click', nextCard);
+      document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextCard(); } };
+    } else if (ox) {
+      $$('.ox-btn', view).forEach((b) => b.addEventListener('click', () => answerOX(b.dataset.ox)));
+      document.onkeydown = (e) => {
+        if (e.key === 'o' || e.key === 'O' || e.key === '1') answerOX('○');
+        else if (e.key === 'x' || e.key === 'X' || e.key === '2') answerOX('×');
+      };
+    } else if (session.revealed) {
+      $$('.grade', view).forEach((b) => b.addEventListener('click', () => gradeCard(b.dataset.grade)));
       document.onkeydown = (e) => {
         const map = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
         if (map[e.key]) gradeCard(map[e.key]);
       };
-    }
-    if (!session.revealed) {
+    } else {
+      $('#reveal').addEventListener('click', () => { session.revealed = true; drawReview(); });
       document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); session.revealed = true; drawReview(); } };
     }
+  }
+
+  // ○×カードの正解(answerの先頭文字)。○×でなければ null
+  function oxAnswer(card) {
+    const a = (card.a || '').trim();
+    if (a[0] === '○') return '○';
+    if (a[0] === '×') return '×';
+    return null;
+  }
+
+  // ○/×を押したとき: 正誤判定 → SRS反映 → フィードバック表示
+  function answerOX(choice) {
+    if (session.answered) return;
+    document.onkeydown = null;
+    const now = Date.now();
+    const item = session.queue[session.pos];
+    const correct = (choice === oxAnswer(item.card));
+    const gradeId = correct ? 'good' : 'again';
+    const newState = window.SRS.review(item.state, gradeId, now);
+    window.Store.setCardState(item.topic.id, item.idx, newState);
+    window.Store.logReview({
+      t: now, topic: item.topic.id, idx: item.idx,
+      grade: gradeId, stability: newState.stability,
+      retention: item.state.last ? window.SRS.retention(item.state, now) : 0,
+    });
+    session.done++;
+    if (!correct) { session.again++; session.queue.push({ ...item, state: newState }); }
+    session.answered = { choice, correct };
+    drawReview();
+  }
+
+  function nextCard() {
+    document.onkeydown = null;
+    session.pos++;
+    session.revealed = false;
+    session.answered = null;
+    drawReview();
   }
 
   function gradeCard(gradeId) {
@@ -407,6 +566,7 @@
     }
     session.pos++;
     session.revealed = false;
+    session.answered = null;
     drawReview();
   }
 

@@ -236,6 +236,25 @@ table.cmp td.ans .mask {
 .grade:active { transform: scale(.96); }
 .g-label { display: block; }
 
+/* ---- 復習の ○×ボタン ---- */
+.ox-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.ox-btn {
+  border-radius: 14px; padding: 22px 4px; cursor: pointer;
+  background: color-mix(in srgb, var(--c) 14%, #fff);
+  color: var(--c); font-weight: 800; font-size: 20px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 38%, #fff);
+}
+.ox-btn:active { transform: scale(.96); }
+.ox-result { margin-top: 14px; font-weight: 800; font-size: 16px; }
+.ox-result.ok { color: #16a34a; }
+.ox-result.ng { color: #dc2626; }
+.ox-correct { margin-left: 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+[data-theme="dark"] .ox-btn {
+  background: color-mix(in srgb, var(--c) 24%, #1e293b);
+  border-color: color-mix(in srgb, var(--c) 45%, #1e293b);
+  color: #fff;
+}
+
 /* ---- 完了画面 ---- */
 .done { text-align: center; padding: 40px 16px; }
 .done-emoji { font-size: 56px; }
