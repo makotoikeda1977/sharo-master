@@ -151,6 +151,39 @@ body {
 .mini-track { flex: 1; height: 6px; background: #eef2f7; border-radius: 99px; overflow: hidden; }
 .mini-fill { height: 100%; background: linear-gradient(90deg, var(--brand), #6366f1); }
 
+/* ---- 横断テーマ 優先順位テーブル(ホーム) ---- */
+.prio-box { padding: 12px 12px 6px; }
+.prio-head { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 8px; }
+.prio-head h3 { margin: 0; font-size: 15px; }
+.prio-table { width: 100%; border-collapse: collapse; }
+.prio-row { cursor: pointer; border-top: 1px solid var(--line); transition: background .06s; }
+.prio-table tr:first-child { border-top: none; }
+.prio-row:active { background: rgba(59,130,246,.06); }
+.prio-row > td { padding: 11px 4px; vertical-align: middle; }
+.prio-rank { width: 34px; text-align: center; }
+.rank-no {
+  display: inline-grid; place-items: center; width: 24px; height: 24px;
+  border-radius: 50%; background: var(--rc, #cbd5e1); color: #fff;
+  font-size: 12px; font-weight: 800;
+}
+.prio-main { width: 100%; }
+.prio-title { font-size: 14.5px; font-weight: 700; line-height: 1.35; }
+.prio-main .subj-tags { margin-top: 5px; }
+.prio-stat { width: 96px; text-align: right; }
+.prio-stat .mini-track { width: 88px; margin-left: auto; }
+.prio-meta { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.prio-badge { font-size: 10.5px; font-weight: 800; border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
+.prio-badge.new { background: #f1f5f9; color: #94a3b8; }
+.prio-badge.due { background: #fef3c7; color: #b45309; }
+.prio-badge.ok  { background: #dcfce7; color: #15803d; }
+/* まだ開いていない科目はグレーアウト */
+.prio-row.is-untouched .prio-title { color: var(--muted); font-weight: 600; }
+.prio-row.is-untouched .subj { opacity: .45; filter: grayscale(1); }
+.prio-row.is-untouched .mini-fill { background: #cbd5e1; }
+[data-theme="dark"] .prio-badge.new { background: #1e293b; color: #64748b; }
+[data-theme="dark"] .prio-badge.due { background: #3b2f12; color: #fbbf24; }
+[data-theme="dark"] .prio-badge.ok  { background: #14321f; color: #4ade80; }
+
 /* ---- 比較テーブル ---- */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -182,7 +215,7 @@ table.cmp td.ans .mask {
   display: inline-block;
   width: 4.5em; max-width: 100%;
   background: #e11d48; color: transparent; cursor: pointer;
-  white-space: nowrap; overflow: hidden; vertical-align: bottom;
+  white-space: nowrap; overflow: hidden; vertical-align: middle;
   -webkit-user-select: none; user-select: none;
 }
 .sheet table.cmp td.ans .mask.revealed {

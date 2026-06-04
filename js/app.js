@@ -125,67 +125,74 @@
   function renderHome(now) {
     const s = computeStats(now);
     const view = $('#view');
+
+    // 各テーマの「学習の遅れ」を算出して遅れ順(動的)に並べる
+    const rows = topics().map((t) => {
+      const cards = withState(t.cards.map((card, idx) => ({ topic: t, idx, card })), now);
+      const total = cards.length;
+      const studiedCards = cards.filter((c) => c.state.last);
+      const studied = studiedCards.length;
+      const due = cards.filter((c) => window.SRS.isDue(c.state, now)).length;
+      const avgRet = studied
+        ? studiedCards.reduce((a, c) => a + window.SRS.retention(c.state, now), 0) / studied
+        : 0;
+      const coverage = total ? studied / total : 0;
+      const mastery = coverage * avgRet;   // 0..1 いま身についている度合い
+      const lag = 1 - mastery;             // 大きいほど遅れている = 上位
+      return { t, total, studied, due, avgRet, coverage, lag };
+    }).sort((a, b) => b.lag - a.lag || b.due - a.due || b.total - a.total);
+
+    const lagColor = (lag) =>
+      lag >= 0.66 ? '#ef4444' : lag >= 0.33 ? '#f59e0b' : '#22c55e';
+
+    const rowHTML = rows.map((r, i) => {
+      const untouched = r.studied === 0;       // まだ開いていない科目
+      const ret = Math.round(r.avgRet * 100);
+      let badge;
+      if (untouched) badge = '<span class="prio-badge new">未学習</span>';
+      else if (r.due > 0) badge = `<span class="prio-badge due">復習 ${r.due}</span>`;
+      else badge = `<span class="prio-badge ok">定着 ${ret}%</span>`;
+      return `
+        <tr class="prio-row${untouched ? ' is-untouched' : ''}" data-topic="${r.t.id}">
+          <td class="prio-rank"><span class="rank-no" style="--rc:${untouched ? '#cbd5e1' : lagColor(r.lag)}">${i + 1}</span></td>
+          <td class="prio-main">
+            <div class="prio-title">${r.t.title}</div>
+            <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
+          </td>
+          <td class="prio-stat">
+            <div class="mini-track"><div class="mini-fill" style="width:${Math.round(r.coverage * 100)}%"></div></div>
+            <div class="prio-meta">${badge}<span class="small muted">${r.studied}/${r.total}</span></div>
+          </td>
+        </tr>`;
+    }).join('');
+
     view.innerHTML = `
       <section class="hero">
         <h2>横断学習で、点をつなぐ。</h2>
-        <p class="muted">科目をまたいで比較 → アクティブリコールで定着 → 忘却曲線で復習</p>
       </section>
-      ${s.due > 0 ? `
-      <div class="due-banner">
-        <span class="db-ico">⏰</span>
-        <span class="db-text">今日の復習が <b>${s.due}枚</b> たまっています。忘れる前に思い出そう。</span>
-        <button class="db-go" id="banner-go">復習</button>
-      </div>` : ''}
-      <div class="stat-grid">
-        <div class="stat"><div class="stat-num">${s.due}</div><div class="stat-lbl">今日の復習</div></div>
-        <div class="stat"><div class="stat-num">${Math.round(s.avgRet * 100)}<small>%</small></div><div class="stat-lbl">平均記憶定着</div></div>
-        <div class="stat"><div class="stat-num">${s.studied}<small>/${s.total}</small></div><div class="stat-lbl">学習済カード</div></div>
-        <div class="stat"><div class="stat-num">${s.streak}<small>日</small></div><div class="stat-lbl">連続学習</div></div>
+      <div class="card-box prio-box">
+        <div class="prio-head">
+          <h3>横断テーマ</h3>
+          <span class="small muted">学習の遅れ順</span>
+        </div>
+        <table class="prio-table"><tbody>${rowHTML}</tbody></table>
       </div>
-      <button class="btn-primary big" id="start-review">
-        ${s.due > 0 ? `復習をはじめる(${s.due}枚)` : '新しいカードを学ぶ'}
-      </button>
       ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
         🔁 間違えた問題だけ復習(${s.weak}枚)
       </button>` : ''}
       ${s.importedTotal > 0 ? `<button class="btn-ghost big imp-btn" id="start-imported">
         📖 過去問だけ復習(${s.imported}枚)
-      </button>` : ''}
-      <div class="card-box">
-        <h3>記憶の予測カーブ</h3>
-        <p class="muted small">学習済カードの平均保持率が今後どう下がるか</p>
-        <canvas id="home-curve" class="chart"></canvas>
-      </div>
-      <div class="card-box">
-        <h3>横断テーマ</h3>
-        <div class="topic-mini">
-          ${topics().map((t) => `<button class="chip" data-topic="${t.id}">${t.title}</button>`).join('')}
-        </div>
-      </div>`;
+      </button>` : ''}`;
 
-    $('#start-review').addEventListener('click', () => go('review'));
+    $$('.prio-row', view).forEach((el) =>
+      el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
     const weakBtn = $('#start-weak');
     if (weakBtn) weakBtn.addEventListener('click', () => go('review', { weak: true }));
     const impBtn = $('#start-imported');
     if (impBtn) impBtn.addEventListener('click', () => go('review', { imported: true }));
-    const banner = $('#banner-go');
-    if (banner) banner.addEventListener('click', () => go('review'));
-    $$('.chip', view).forEach((b) =>
-      b.addEventListener('click', () => go('cross', { topic: b.dataset.topic })));
 
     // 1日1回の復習リマインド(通知ON時のみ)
     Notify.maybeNotify(s.due);
-
-    // 平均カーブ(代表 = 学習済カードの平均 stability)
-    const cards = withState(allCards(), now).filter((c) => c.state.last);
-    if (cards.length) {
-      const avgStab = cards.reduce((a, c) => a + c.state.stability, 0) / cards.length;
-      window.Charts.forgettingCurve($('#home-curve'),
-        [{ stability: avgStab, last: now, color: '#3b82f6' }], now, Math.max(7, avgStab * 2));
-    } else {
-      window.Charts.forgettingCurve($('#home-curve'),
-        [{ stability: 1, last: now, color: '#cbd5e1', dim: true }], now, 14);
-    }
   }
 
   // ============================ 横断学習 ====================================
@@ -194,8 +201,6 @@
     const topicId = params && params.topic;
     if (!topicId) {
       view.innerHTML = `
-        <section class="hero compact"><h2>横断テーマ</h2>
-          <p class="muted">科目をまたいで「同じ論点」を並べて覚える</p></section>
         <button class="btn-ghost big palace-btn" id="open-palace">🏰 記憶の宮殿(場所で覚える)</button>
         <div class="topic-list">
           ${topics().map((t) => topicCardHTML(t, now)).join('')}
@@ -207,7 +212,6 @@
     }
 
     const topic = topics().find((t) => t.id === topicId);
-    const tableMistakes = ((window.Store.getSettings().tableMistakes || {})[topicId]) || [];
     view.innerHTML = `
       <button class="link-back" id="back">← テーマ一覧</button>
       <section class="hero compact">
@@ -219,7 +223,6 @@
         ${topic.table ? `
         <div class="sheet-bar">
           <button class="chip2" id="sheet-toggle">🟥 赤シート ON</button>
-          <button class="chip2" id="reveal-all">全部表示</button>
           <span class="sheet-hint small muted">タップで答え表示</span>
         </div>
         <div class="table-wrap sheet" id="cmp-wrap">
@@ -231,7 +234,7 @@
                     ? SUBJECTS[topic.subjects[0]].color : null);
                 const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
                 return `<tr${trA}>${r.map((c, i) => {
-                  if (i === 0) return `<td class="rowhdr">${tableMistakes.includes(ri) ? '<span class="row-x">✗</span>' : ''}${c}</td>`;
+                  if (i === 0) return `<td class="rowhdr">${c}</td>`;
                   if (!c) return '<td></td>';
                   return `<td class="ans"><span class="mask">${c}</span></td>`;
                 }).join('')}</tr>`;
@@ -241,9 +244,7 @@
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
         ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
       </div>
-      ${topic.table ? `<button class="btn-primary big" id="table-test">📝 この表でテスト(${topic.table.rows.length}行)</button>` : ''}
-      ${topic.table && tableMistakes.length ? `<button class="btn-ghost big" id="table-retry">🔁 前回の間違いだけ(${tableMistakes.length}行)</button>` : ''}
-      <button class="btn-${topic.table ? 'ghost' : 'primary'} big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
+      <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
 
     $('#back').addEventListener('click', () => go('cross'));
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
@@ -253,111 +254,16 @@
       const wrap = $('#cmp-wrap');
       const masks = $$('.mask', wrap);
       let sheetOn = true;
-      let allShown = false;
       const applySheet = () => {
         wrap.classList.toggle('sheet', sheetOn);
         $('#sheet-toggle').textContent = sheetOn ? '🟥 赤シート ON' : '⬜️ 赤シート OFF';
         $('.sheet-hint').style.visibility = sheetOn ? 'visible' : 'hidden';
       };
       $('#sheet-toggle').addEventListener('click', () => { sheetOn = !sheetOn; applySheet(); });
-      $('#reveal-all').addEventListener('click', () => {
-        allShown = !allShown;
-        masks.forEach((m) => m.classList.toggle('revealed', allShown));
-        $('#reveal-all').textContent = allShown ? '全部隠す' : '全部表示';
-      });
       masks.forEach((m) => m.addEventListener('click', () => {
         if (sheetOn) m.classList.toggle('revealed');
       }));
-
-      // 表でテスト
-      $('#table-test').addEventListener('click', () =>
-        renderTableTest(topic, topic.table.rows.map((_, i) => i)));
-      const retry = $('#table-retry');
-      if (retry) retry.addEventListener('click', () => renderTableTest(topic, tableMistakes));
     }
-  }
-
-  // ============================ 表テスト(行ごとに○×) ======================
-  function renderTableTest(topic, rowIndexes) {
-    const headers = topic.table.headers;
-    const rows = rowIndexes.slice();
-    const ses = { pos: 0, revealed: false, results: {} };
-
-    function draw() {
-      if (ses.pos >= rows.length) return drawResult();
-      const rIdx = rows[ses.pos];
-      const row = topic.table.rows[rIdx];
-      const ansHTML = headers.slice(1).map((h, k) =>
-        `<div class="tt-ans-row"><span class="tt-ans-label">${h}</span><span class="tt-ans-val">${row[k + 1] || '—'}</span></div>`
-      ).join('');
-      $('#view').innerHTML = `
-        <button class="link-back" id="tt-back">← ${topic.title} に戻る</button>
-        <div class="rv-top">
-          <span class="mode-badge tt">📝 表テスト</span>
-          <div class="rv-progress"><div class="rv-fill" style="width:${ses.pos / rows.length * 100}%"></div></div>
-          <span class="small muted">${ses.pos + 1} / ${rows.length}</span>
-        </div>
-        <div class="recall">
-          <div class="recall-meta">
-            <span class="subj-line">${topic.subjects.map(subjTag).join('')}</span>
-            <span class="topic-name">${topic.title}</span>
-          </div>
-          <div class="tt-prompt-label">${headers[0]}</div>
-          <div class="q">${row[0]}</div>
-          <div class="tt-answers ${ses.revealed ? 'show' : ''}">${ansHTML}</div>
-        </div>
-        ${ses.revealed
-          ? `<div class="tt-actions two">
-               <button class="grade" data-ok="0" style="--c:#ef4444"><span class="g-label">✗ まちがえた</span></button>
-               <button class="grade" data-ok="1" style="--c:#22c55e"><span class="g-label">✓ 正解</span></button>
-             </div>`
-          : `<div class="tt-actions"><button class="btn-primary big" id="tt-reveal">答えを見る</button></div>`}`;
-      $('#tt-back').addEventListener('click', () => go('cross', { topic: topic.id }));
-      if (!ses.revealed) {
-        $('#tt-reveal').addEventListener('click', () => { ses.revealed = true; draw(); });
-      } else {
-        $$('.tt-actions .grade').forEach((b) => b.addEventListener('click', () => {
-          ses.results[rIdx] = b.dataset.ok === '1';
-          ses.pos++; ses.revealed = false; draw();
-        }));
-      }
-    }
-
-    function drawResult() {
-      const wrong = rows.filter((r) => !ses.results[r]);
-      const correct = rows.length - wrong.length;
-      const pct = Math.round(correct / rows.length * 100);
-      // 間違えた行を保存(次回この表を開くと ✗ 印が付く)
-      const tm = window.Store.getSettings().tableMistakes || {};
-      tm[topic.id] = wrong;
-      window.Store.setSetting('tableMistakes', tm);
-
-      const wrongList = wrong.map((r) => `<li>${topic.table.rows[r][0]}</li>`).join('');
-      $('#view').innerHTML = `
-        <button class="link-back" id="tt-back">← ${topic.title} に戻る</button>
-        <section class="done">
-          <div class="done-emoji">${wrong.length === 0 ? '💯' : '📊'}</div>
-          <h2>${correct} / ${rows.length} 正解(${pct}%)</h2>
-          ${wrong.length
-            ? `<div class="tt-wrong"><p class="muted small">間違えた項目</p><ul>${wrongList}</ul></div>`
-            : '<p class="muted">全問正解!すばらしい 🎉</p>'}
-          <div class="done-actions">
-            ${wrong.length ? `<button class="btn-primary" id="tt-retry-wrong">間違いだけもう一度(${wrong.length})</button>` : ''}
-            <button class="btn-ghost" id="tt-retry-all">最初から</button>
-            <button class="btn-ghost" id="tt-done">表に戻る</button>
-          </div>
-        </section>`;
-      $('#tt-back').addEventListener('click', () => go('cross', { topic: topic.id }));
-      $('#tt-done').addEventListener('click', () => go('cross', { topic: topic.id }));
-      $('#tt-retry-all').addEventListener('click', () =>
-        renderTableTest(topic, topic.table.rows.map((_, i) => i)));
-      const rw = $('#tt-retry-wrong');
-      if (rw) rw.addEventListener('click', () => renderTableTest(topic, wrong));
-    }
-
-    document.onkeydown = null;
-    window.scrollTo(0, 0);
-    draw();
   }
 
   function topicCardHTML(t, now) {
