@@ -199,6 +199,10 @@ table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 table.cmp tbody tr.lawrow td { background: color-mix(in srgb, var(--rowc) 13%, var(--surface)); }
 table.cmp tbody tr.lawrow td.rowhdr { box-shadow: inset 4px 0 0 var(--rowc); }
 
+/* ---- 答え列ごとの色分け(5年=青/2年=橙 等。行色より優先) ---- */
+table.cmp th.colh { color: var(--colc); border-bottom: 2px solid var(--colc); }
+table.cmp tbody tr td.ans.colc { background: color-mix(in srgb, var(--colc) 12%, var(--surface)); }
+
 /* ---- 赤シート(答えを隠す) ---- */
 .sheet-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
 .chip2 {

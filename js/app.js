@@ -212,6 +212,9 @@
     }
 
     const topic = topics().find((t) => t.id === topicId);
+    // 答え列が2つ以上ある表は、列ごとに色を分けて区別しやすくする
+    const multiCol = !!(topic.table && topic.table.headers && topic.table.headers.length >= 3);
+    const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
     view.innerHTML = `
       <button class="link-back" id="back">← テーマ一覧</button>
       <section class="hero compact">
@@ -227,7 +230,10 @@
         </div>
         <div class="table-wrap sheet" id="cmp-wrap">
           <table class="cmp">
-            <thead><tr>${topic.table.headers.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+            <thead><tr>${topic.table.headers.map((h, i) =>
+                (multiCol && i > 0)
+                  ? `<th class="colh" style="--colc:${colAccent(i)}">${h}</th>`
+                  : `<th>${h}</th>`).join('')}</tr></thead>
             <tbody>${topic.table.rows.map((r, ri) => {
                 const lc = rowLawColor(r[0]) ||
                   (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]]
@@ -236,7 +242,8 @@
                 return `<tr${trA}>${r.map((c, i) => {
                   if (i === 0) return `<td class="rowhdr">${c}</td>`;
                   if (!c) return '<td></td>';
-                  return `<td class="ans"><span class="mask">${c}</span></td>`;
+                  const cs = (multiCol) ? ` class="ans colc" style="--colc:${colAccent(i)}"` : ' class="ans"';
+                  return `<td${cs}><span class="mask">${c}</span></td>`;
                 }).join('')}</tr>`;
               }).join('')}
             </tbody>
@@ -308,6 +315,9 @@
     for (const [re, c] of LAW_COLORS) if (re.test(t)) return c;
     return null;
   }
+
+  // 表の「答え列」を左から順に色分けする(例: 5年=青 / 2年=橙 / 時効にかからない=灰)
+  const COL_ACCENTS = ['#2563eb', '#d97706', '#0891b2', '#16a34a'];
 
   // ============================ 復習(アクティブリコール) ==================
   let session = null;
@@ -383,13 +393,15 @@
 
     view.innerHTML = `
       <div class="rv-top">
-        ${session.weak ? '<span class="mode-badge">🔁 苦手</span>' : ''}
-        ${session.imported ? '<span class="mode-badge imp">📖 過去問</span>' : ''}
+        <button class="link-back" id="rv-exit">← もどる</button>
         <div class="rv-progress"><div class="rv-fill" style="width:${session.pos / total * 100}%"></div></div>
         <span class="small muted">${session.pos + 1} / ${total}</span>
+        <button class="link-back rv-skip" id="rv-skip">スキップ →</button>
       </div>
       <div class="recall">
         <div class="recall-meta">
+          ${session.weak ? '<span class="mode-badge">🔁 苦手</span>' : ''}
+          ${session.imported ? '<span class="mode-badge imp">📖 過去問</span>' : ''}
           <span class="subj-line">${item.topic.subjects.map(subjTag).join('')}</span>
           <span class="topic-name">${item.topic.title}</span>
           ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
@@ -414,6 +426,11 @@
                      <span class="g-label">${g.label}</span></button>`).join('')
               : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
       </div>`;
+
+    // 画面遷移ボタン(常時): もどる=この復習をやめて戻る / スキップ=採点せず次へ
+    $('#rv-exit').addEventListener('click', () =>
+      go(session.topicId ? 'cross' : 'home', session.topicId ? { topic: session.topicId } : null));
+    $('#rv-skip').addEventListener('click', skipCard);
 
     if (card.hint) {
       const h = $('#hint');
@@ -478,6 +495,15 @@
   }
 
   function nextCard() {
+    document.onkeydown = null;
+    session.pos++;
+    session.revealed = false;
+    session.answered = null;
+    drawReview();
+  }
+
+  // 採点せずに次のカードへ進む(記憶状態は変えない)
+  function skipCard() {
     document.onkeydown = null;
     session.pos++;
     session.revealed = false;
