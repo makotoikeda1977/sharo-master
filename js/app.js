@@ -196,9 +196,11 @@
       view.innerHTML = `
         <section class="hero compact"><h2>横断テーマ</h2>
           <p class="muted">科目をまたいで「同じ論点」を並べて覚える</p></section>
+        <button class="btn-ghost big palace-btn" id="open-palace">🏰 記憶の宮殿(場所で覚える)</button>
         <div class="topic-list">
           ${topics().map((t) => topicCardHTML(t, now)).join('')}
         </div>`;
+      $('#open-palace').addEventListener('click', () => go('palace'));
       $$('.topic-card', view).forEach((el) =>
         el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
       return;
@@ -855,12 +857,41 @@
     URL.revokeObjectURL(url);
   }
 
+  // ============================ 記憶の宮殿 ==================================
+  function renderPalace() {
+    const view = $('#view');
+    const byId = {};
+    topics().forEach((t) => { byId[t.id] = t; });
+    const rooms = (window.SHARO.PALACE || []).filter((r) => byId[r.topic]);
+    view.innerHTML = `
+      <button class="link-back" id="back">← テーマ一覧</button>
+      <section class="hero compact">
+        <h2>🏰 記憶の宮殿</h2>
+        <p class="muted">家の中を順に歩きながら、各「場所」に紐づく単元を思い出そう。場所→中身の順序が想起の手がかりになります。</p>
+      </section>
+      <div class="palace">
+        ${rooms.map((r, i) => `
+          <button class="palace-room" data-topic="${r.topic}">
+            <span class="palace-num">${i + 1}</span>
+            <span class="palace-body">
+              <span class="palace-place">${r.place}</span>
+              <span class="palace-hook">${r.hook}</span>
+              <span class="palace-topic">→ ${byId[r.topic].title}</span>
+            </span>
+          </button>`).join('')}
+      </div>`;
+    $('#back').addEventListener('click', () => go('cross'));
+    $$('.palace-room', view).forEach((el) =>
+      el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
+  }
+
   // ============================ ルーティング ================================
   const ROUTES = {
     home: renderHome,
     cross: renderCross,
     review: renderReview,
     growth: renderGrowth,
+    palace: renderPalace,
   };
 
   function go(route, params) {
