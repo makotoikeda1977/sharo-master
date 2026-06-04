@@ -227,6 +227,19 @@ table.cmp td.ans .mask {
   background: transparent; color: inherit;
   white-space: normal; overflow: visible;
 }
+/* 語句単位の赤シート(太字だけ隠す。Anki方式) */
+table.cmp td.wordcloze { white-space: normal; }
+table.cmp td.wordcloze .cloze {
+  border-radius: 3px; padding: 0 2px; font-weight: 700;
+  transition: background .12s, color .12s;
+}
+.sheet table.cmp td.wordcloze .cloze {
+  background: #e11d48; color: transparent; cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+}
+.sheet table.cmp td.wordcloze .cloze.revealed {
+  background: transparent; color: #be123c;
+}
 .row-x { color: #ef4444; font-weight: 800; margin-right: 5px; }
 
 /* ---- 表テスト ---- */

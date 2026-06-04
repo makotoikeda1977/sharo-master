@@ -242,8 +242,14 @@
                 return `<tr${trA}>${r.map((c, i) => {
                   if (i === 0) return `<td class="rowhdr">${c}</td>`;
                   if (!c) return '<td></td>';
-                  const cs = (multiCol) ? ` class="ans colc" style="--colc:${colAccent(i)}"` : ' class="ans"';
-                  return `<td${cs}><span class="mask">${c}</span></td>`;
+                  // セル内に **太字** があれば「語句単位の赤シート」、なければセル全体マスク
+                  const hasCloze = c.indexOf('**') >= 0;
+                  const cls = 'ans' + (multiCol ? ' colc' : '') + (hasCloze ? ' wordcloze' : '');
+                  const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+                  const inner = hasCloze
+                    ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>')
+                    : `<span class="mask">${c}</span>`;
+                  return `<td class="${cls}"${style}>${inner}</td>`;
                 }).join('')}</tr>`;
               }).join('')}
             </tbody>
@@ -259,7 +265,7 @@
     // 赤シート(答えを隠す/タップで表示)
     if (topic.table) {
       const wrap = $('#cmp-wrap');
-      const masks = $$('.mask', wrap);
+      const masks = $$('.mask, .cloze', wrap);
       let sheetOn = true;
       const applySheet = () => {
         wrap.classList.toggle('sheet', sheetOn);
