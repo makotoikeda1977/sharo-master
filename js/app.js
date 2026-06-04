@@ -538,8 +538,15 @@
   // ○×カードの正解(answerの先頭文字)。○×でなければ null
   function oxAnswer(card) {
     const a = (card.a || '').trim();
-    if (a[0] === '○') return '○';
-    if (a[0] === '×') return '×';
+    if (!a) return null;
+    const c = a[0];
+    // ○ の異体字: ○(U+25CB) 〇(U+3007) ◯(U+25EF) ⭕(emoji)
+    if ('○〇◯⭕'.indexOf(c) >= 0) return '○';
+    // × の異体字: ×(U+00D7) ✕(U+2715) ✗(U+2717) ╳(U+2573)
+    if ('×✕✗╳'.indexOf(c) >= 0) return '×';
+    // 日本語/英語の語頭表記(正しい/正解・誤り/誤った/不正解・true/false)、単独「正」「誤」も可
+    if (a === '正' || /^(正しい|正解|まる|true)/i.test(a)) return '○';
+    if (a === '誤' || /^(誤り|誤った|不正解|ばつ|ばってん|false)/i.test(a)) return '×';
     return null;
   }
 
