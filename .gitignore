@@ -4,3 +4,6 @@ __pycache__/
 *.pyo
 .env
 .env.local
+
+# ローカル引き継ぎメモ（デプロイ対象外）
+HANDOFF.md
