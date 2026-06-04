@@ -256,6 +256,15 @@
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
         ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
+        ${topic.palace ? `
+        <div class="palace-tip">
+          <div class="pt-head">🏰 記憶の宮殿で覚える(一例)</div>
+          ${topic.palace.intro ? `<p class="pt-intro">${topic.palace.intro}</p>` : ''}
+          <ol class="pt-steps">
+            ${topic.palace.steps.map((s) =>
+              `<li><span class="pt-spot">${s.spot}</span><span class="pt-story">${s.story}</span></li>`).join('')}
+          </ol>
+        </div>` : ''}
       </div>
       <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
 
