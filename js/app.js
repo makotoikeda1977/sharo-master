@@ -113,7 +113,7 @@
       if (window.Store.getSettings().lastNotified === today) return;
       window.Store.setSetting('lastNotified', today);
       try {
-        new Notification('社労士 横断マスター', {
+        new Notification('社労士 横断宮殿', {
           body: `今日の復習が${dueCount}枚あります。`,
           icon: './icons/icon.svg',
         });
@@ -122,7 +122,17 @@
   };
 
   // ============================ ホーム ======================================
-  let homeSubj = null;   // ホームの科目フィルタ(null=すべて)
+  let homeSubj = null;        // ホームの科目フィルタ(null=すべて)
+  let scrollToTopic = null;   // テーマ一覧に戻ったとき、その位置までスクロール
+  let lastOrigin = 'cross';   // テーマ詳細を開いた元の一覧(home / cross)
+
+  // 一覧描画後、戻り元のテーマが見える位置までスクロールする
+  function restoreListScroll(view) {
+    if (!scrollToTopic) return;
+    const tgt = view.querySelector(`[data-topic="${scrollToTopic}"]`);
+    scrollToTopic = null;
+    if (tgt) requestAnimationFrame(() => tgt.scrollIntoView({ block: 'center' }));
+  }
 
   function renderHome(now) {
     const s = computeStats(now);
@@ -174,9 +184,6 @@
     }).join('');
 
     view.innerHTML = `
-      <section class="hero">
-        <h2>横断学習で、点をつなぐ。</h2>
-      </section>
       <div class="subj-filter">
         <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">すべて</button>
         ${subjList.map((sj) =>
@@ -199,7 +206,8 @@
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
-      el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
+      el.addEventListener('click', () => { lastOrigin = 'home'; go('cross', { topic: el.dataset.topic }); }));
+    restoreListScroll(view);
     const weakBtn = $('#start-weak');
     if (weakBtn) weakBtn.addEventListener('click', () => go('review', { weak: true }));
     const impBtn = $('#start-imported');
@@ -221,7 +229,8 @@
         </div>`;
       $('#open-palace').addEventListener('click', () => go('palace'));
       $$('.topic-card', view).forEach((el) =>
-        el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
+        el.addEventListener('click', () => { lastOrigin = 'cross'; go('cross', { topic: el.dataset.topic }); }));
+      restoreListScroll(view);
       return;
     }
 
@@ -281,7 +290,7 @@
       </div>
       <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
 
-    $('#back').addEventListener('click', () => go('cross'));
+    $('#back').addEventListener('click', () => { scrollToTopic = topic.id; go(lastOrigin); });
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
 
     // 赤シート(答えを隠す/タップで表示)
