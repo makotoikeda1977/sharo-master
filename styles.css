@@ -254,9 +254,9 @@ body {
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.cmp th {
   background: #f1f5fd; color: #334155; font-weight: 700; text-align: left;
-  padding: 9px 10px; position: sticky; left: 0; white-space: nowrap;
+  padding: 9px 10px; white-space: normal; word-break: break-word; line-height: 1.4;
 }
-table.cmp td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+table.cmp td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 table.cmp td.rowhdr { font-weight: 700; color: var(--ink); white-space: normal; word-break: break-word; }
 table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 
