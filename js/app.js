@@ -428,6 +428,7 @@
     const showAnswer = session.revealed || !!ans;
 
     view.innerHTML = `
+      ${ans ? `<div class="answer-flash ${ans.correct ? 'ok' : 'ng'}">${ans.correct ? '⭕ 正解' : '❌ 不正解'}</div>` : ''}
       <div class="rv-top">
         <button class="link-back" id="rv-exit">← もどる</button>
         <div class="rv-progress"><div class="rv-fill" style="width:${session.pos / total * 100}%"></div></div>
