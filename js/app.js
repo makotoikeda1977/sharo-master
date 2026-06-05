@@ -479,7 +479,7 @@
     const showAnswer = session.revealed || !!ans;
 
     view.innerHTML = `
-      ${ans ? `<div class="answer-flash ${ans.correct ? 'ok' : 'ng'}">${ans.correct ? '⭕ 正解' : '❌ 不正解'}</div>` : ''}
+      ${ans ? `<div class="answer-flash ${ans.correct ? 'ok' : 'ng'}">${ans.correct ? '○' : '×'}</div>` : ''}
       <div class="rv-top">
         <button class="link-back" id="rv-exit">← もどる</button>
         <div class="rv-progress"><div class="rv-fill" style="width:${session.pos / total * 100}%"></div></div>
@@ -497,7 +497,6 @@
         </div>
         <div class="q">${card.q}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
-        ${ans ? `<div class="ox-result ${ans.correct ? 'ok' : 'ng'}">${ans.correct ? '○ 正解' : '× 不正解'}<span class="ox-correct">(正解: ${ox})</span></div>` : ''}
         <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.a}</div>
       </div>
       <div class="rv-actions">
