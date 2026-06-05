@@ -86,6 +86,15 @@ body {
 [data-theme="dark"] .pt-story { color: #e2e8f0; }
 [data-theme="dark"] .pt-head { color: #c4b5fd; }
 
+/* ---- 覚え方ページ ---- */
+.mg-text { font-size: 14px; line-height: 1.8; margin: 6px 0 0; }
+.mg-steps { margin: 8px 0 0; padding-left: 22px; }
+.mg-steps li { font-size: 14px; line-height: 1.7; margin-bottom: 6px; }
+.mg-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.mg-list li { font-size: 14px; line-height: 1.7; margin-bottom: 8px; }
+.mg-apply { border: 1px solid #e9d5ff; background: linear-gradient(135deg, #faf5ff, #eef2ff); }
+[data-theme="dark"] .mg-apply { background: linear-gradient(135deg, #271d3f, #1d2440); border-color: #4c1d95; }
+
 /* ---- 統計グリッド ---- */
 .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
 .stat-grid.tight { grid-template-columns: repeat(3, 1fr); }

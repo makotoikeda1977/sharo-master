@@ -408,14 +408,14 @@
           <div class="done-actions">
             ${empty ? '' : `<button class="btn-primary" id="more">続けて復習</button>`}
             <button class="btn-ghost" id="to-home">ホームへ</button>
-            <button class="btn-ghost" id="to-growth">成長を見る</button>
+            <button class="btn-ghost" id="to-memory">覚え方を見る</button>
           </div>
         </section>`;
       const more = $('#more');
       if (more) more.addEventListener('click', () =>
         renderReview(Date.now(), { topic: session.topicId, weak: session.weak, imported: session.imported }));
       $('#to-home').addEventListener('click', () => go('home'));
-      $('#to-growth').addEventListener('click', () => go('growth'));
+      $('#to-memory').addEventListener('click', () => go('memory'));
       return;
     }
 
@@ -861,11 +861,62 @@
   }
 
   // ============================ ルーティング ================================
+  // ============================ 覚え方(記憶の宮殿) =========================
+  function renderMemoryGuide() {
+    const view = $('#view');
+    view.innerHTML = `
+      <section class="hero compact">
+        <h2>🏰 記憶の宮殿で覚える</h2>
+        <p class="muted">場所と"ありえない絵"で、社労士の暗記を定着させる方法</p>
+      </section>
+
+      <div class="card-box">
+        <h3>記憶の宮殿とは</h3>
+        <p class="mg-text">古代から使われる記憶術(場所法／メソッド・オブ・ロサイ)。よく知っている場所(自宅など)を決まった順路で歩き、覚えたいことを各場所に"絵"として置きます。あとで頭の中で同じ順路を歩けば、絵が手がかりになって思い出せます。脳は「場所」の記憶が得意なので、その力に暗記を相乗りさせる仕組みです(研究でも長期の記憶向上が確認されています)。</p>
+      </div>
+
+      <div class="card-box">
+        <h3>作り方(4ステップ)</h3>
+        <ol class="mg-steps">
+          <li><b>場所を選ぶ</b> … 自宅・通学路など、目をつぶって歩ける場所。</li>
+          <li><b>順路を固定</b> … 玄関→廊下→居間…と、いつも同じ順に進む。</li>
+          <li><b>絵を置く</b> … 各場所に、覚える内容を"ありえない絵"にして置く。</li>
+          <li><b>歩いて復習</b> … 順路を何度か歩く。間隔をあけて見直すと長期記憶に。</li>
+        </ol>
+      </div>
+
+      <div class="card-box">
+        <h3>効果を上げるコツ</h3>
+        <ul class="mg-list">
+          <li>🔍 <b>誇張</b> … 巨大化・大量化など、ありえない大きさに。</li>
+          <li>🎬 <b>動き</b> … 止まった絵より、動いている絵のほうが残る。</li>
+          <li>😂 <b>感情・ユーモア</b> … 笑える・驚く・気持ち悪いほど忘れない。</li>
+          <li>👂 <b>五感</b> … 音・におい・手ざわりも一緒に想像する。</li>
+          <li>🧵 <b>物語でつなぐ</b> … 場所から場所へ、流れのある一本のストーリーに。</li>
+          <li>🚪 <b>1部屋1テーマ</b> … 詰め込みすぎず、場所どうしは少し離す。</li>
+        </ul>
+      </div>
+
+      <div class="card-box mg-apply">
+        <h3>社労士試験への応用</h3>
+        <ul class="mg-list">
+          <li><b>横断の比較表を"家"に配置</b> … 「適用事業所」なら、玄関の表札＝法人(無条件で強制)、廊下の行列＝17業種、居間の5脚の椅子＝5人以上…のように各部屋へ。各テーマの 💡要点 にある<b>「🏰記憶の宮殿で覚える(一例)」</b>がその見本です。</li>
+          <li><b>数字を場所＋語呂で</b> … 人数・日数・率(700人/3,000人、14日以内、4分の3 等)は、置き場所と語呂をセットにすると混同しにくい。</li>
+          <li><b>登場人物で覚える</b> … 「公務員・船員」は<b>合コン</b>(国家公務員くん・船員くんを労基さん・労災さんが品定め)に見立てると、誰にどの法律がアリ/ナシか思い出せます。</li>
+          <li><b>赤シート＋アクティブリコール</b> … まず宮殿で全体像を作り、横断表の赤シートと「問題」タブの○×で思い出す練習を繰り返す。</li>
+          <li><b>忘却曲線で復習</b> … このアプリの出題間隔(間隔反復)に合わせて宮殿を歩き直すと、本試験まで保持できます。</li>
+        </ul>
+      </div>
+
+      <button class="btn-primary big" id="mg-cross">🔀 横断テーマで宮殿の一例を見る</button>`;
+    $('#mg-cross').addEventListener('click', () => go('cross'));
+  }
+
   const ROUTES = {
     home: renderHome,
     cross: renderCross,
     review: renderReview,
-    growth: renderGrowth,
+    memory: renderMemoryGuide,
     palace: renderPalace,
   };
 
