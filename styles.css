@@ -86,6 +86,23 @@ body {
 [data-theme="dark"] .pt-story { color: #e2e8f0; }
 [data-theme="dark"] .pt-head { color: #c4b5fd; }
 
+/* ---- 制度のホンネ(差分セリフ) ---- */
+.voices { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line); }
+.vc-head { font-weight: 800; font-size: 13.5px; color: #334155; margin-bottom: 8px; }
+.vc-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; margin-bottom: 8px; }
+.vc-name {
+  white-space: nowrap; align-self: start; font-size: 11.5px; font-weight: 800; color: #fff;
+  background: var(--vc, #64748b); border-radius: 8px; padding: 3px 8px;
+}
+.vc-line {
+  font-size: 13.5px; line-height: 1.6; color: #1e293b;
+  background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--vc, #64748b);
+  border-radius: 8px; padding: 7px 10px;
+}
+[data-theme="dark"] .voices { background: #0f172a; }
+[data-theme="dark"] .vc-head { color: #cbd5e1; }
+[data-theme="dark"] .vc-line { background: #1e293b; color: #e2e8f0; }
+
 /* ---- 覚え方ページ ---- */
 .mg-text { font-size: 14px; line-height: 1.8; margin: 6px 0 0; }
 .mg-steps { margin: 8px 0 0; padding-left: 22px; }
@@ -541,3 +558,23 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 1
   from { opacity: 0; transform: translate(-50%, -10px) scale(.85); }
   to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
+
+/* ---- 列ヘッダーの法律キャラ顔 ---- */
+table.cmp th .colface {
+  display: block; width: 22px; height: 22px; margin: 0 auto 2px;
+  border-radius: 50%; object-fit: cover; object-position: center top;
+  border: 1.5px solid #cbd5e1; background: #fff;
+}
+table.cmp th { text-align: center; }
+table.cmp th:first-child { text-align: left; }
+
+/* ---- トップページのキャラ図鑑 ---- */
+.char-gallery h3 { margin: 0 0 8px; font-size: 15px; }
+.char-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+.char-item { flex: none; width: 44px; text-align: center; }
+.char-item img {
+  width: 40px; height: 40px; border-radius: 50%;
+  object-fit: cover; object-position: center top; border: 1.5px solid #cbd5e1; background: #fff;
+}
+.char-law { display: block; font-size: 10px; font-weight: 800; color: #334155; margin-top: 2px; }
+.char-name { display: block; font-size: 9px; color: #64748b; line-height: 1.25; }

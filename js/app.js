@@ -184,6 +184,13 @@
     }).join('');
 
     view.innerHTML = `
+      <div class="card-box char-gallery">
+        <h3>法律キャラ図鑑</h3>
+        <div class="char-row">
+          ${LAW_CHARACTERS.map((c) =>
+            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
+        </div>
+      </div>
       <div class="subj-filter">
         <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">すべて</button>
         ${subjList.map((sj) =>
@@ -252,10 +259,13 @@
         </div>
         <div class="table-wrap sheet" id="cmp-wrap">
           <table class="cmp">
-            <thead><tr>${topic.table.headers.map((h, i) =>
-                (multiCol && i > 0)
-                  ? `<th class="colh" style="--colc:${colAccent(i)}">${h}</th>`
-                  : `<th>${h}</th>`).join('')}</tr></thead>
+            <thead><tr>${topic.table.headers.map((h, i) => {
+                const cid = lawCharId(h);
+                const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" alt="">` : '';
+                const cls = (multiCol && i > 0) ? ' class="colh"' : '';
+                const style = (multiCol && i > 0) ? ` style="--colc:${colAccent(i)}"` : '';
+                return `<th${cls}${style}>${face}${h}</th>`;
+              }).join('')}</tr></thead>
             <tbody>${topic.table.rows.map((r, ri) => {
                 const lc = rowLawColor(r[0]) ||
                   (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]]
@@ -286,6 +296,17 @@
             ${topic.palace.steps.map((s) =>
               `<li><span class="pt-spot">${s.spot}</span><span class="pt-story">${s.story}</span></li>`).join('')}
           </ol>
+        </div>` : ''}
+        ${topic.voices && topic.voices.length ? `
+        <div class="voices">
+          <div class="vc-head">🗣️ 制度のホンネ(差分)</div>
+          ${topic.voices.map((v) => {
+            const c = (v.subj && SUBJECTS[v.subj]) ? SUBJECTS[v.subj].color : '#64748b';
+            return `<div class="vc-row" style="--vc:${c}">
+              <span class="vc-name">${v.name}</span>
+              <span class="vc-line">${v.line}</span>
+            </div>`;
+          }).join('')}
         </div>` : ''}
       </div>
       <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
@@ -351,6 +372,36 @@
     for (const [re, c] of LAW_COLORS) if (re.test(t)) return c;
     return null;
   }
+
+  // 法律→キャラ(顔アイコン)の対応。表の列ヘッダや記憶の宮殿で使う
+  const LAW_CHARS = [
+    [/労働基準|労基/, 'kijun'],
+    [/安全衛生|安衛/, 'anei'],
+    [/労災/, 'rosai'],
+    [/雇用/, 'koyo'],
+    [/徴収|労働保険料/, 'choshu'],
+    [/厚生年金|厚年/, 'konen'],
+    [/国民年金|国年/, 'kokunen'],
+    [/健康保険|健保/, 'kenpo'],
+  ];
+  function lawCharId(text) {
+    const t = String(text || '');
+    for (const [re, id] of LAW_CHARS) if (re.test(t)) return id;
+    return null;
+  }
+  // 法律キャラ名簿(トップページの図鑑用)
+  const LAW_CHARACTERS = [
+    { id: 'kijun', name: '基島規子', law: '労基' },
+    { id: 'anei', name: '守谷衛', law: '安衛' },
+    { id: 'rosai', name: '災堂咲', law: '労災' },
+    { id: 'koyo', name: '職田めぐみ', law: '雇用' },
+    { id: 'choshu', name: '収沢徴子', law: '徴収' },
+    { id: 'kenpo', name: '保科碧', law: '健保' },
+    { id: 'konen', name: '厚見年実', law: '厚年' },
+    { id: 'kokunen', name: '国原みのり', law: '国年' },
+    { id: 'roippan', name: '労井美樹', law: '労一' },
+    { id: 'shaippan', name: '市役あい', law: '社一' },
+  ];
 
   // 表の「答え列」を左から順に色分けする(例: 5年=青 / 2年=橙 / 時効にかからない=灰)
   const COL_ACCENTS = ['#2563eb', '#d97706', '#0891b2', '#16a34a'];
