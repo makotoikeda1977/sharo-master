@@ -261,7 +261,7 @@
           <table class="cmp">
             <thead><tr>${topic.table.headers.map((h, i) => {
                 const cid = lawCharId(h);
-                const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" alt="">` : '';
+                const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" onerror="this.style.display='none'" alt="">` : '';
                 const cls = (multiCol && i > 0) ? ' class="colh"' : '';
                 const style = (multiCol && i > 0) ? ` style="--colc:${colAccent(i)}"` : '';
                 return `<th${cls}${style}>${face}${h}</th>`;
@@ -302,8 +302,10 @@
           <div class="vc-head">🗣️ 制度のホンネ(差分)</div>
           ${topic.voices.map((v) => {
             const c = (v.subj && SUBJECTS[v.subj]) ? SUBJECTS[v.subj].color : '#64748b';
+            const cid = v.char || (v.subj && SUBJECTS[v.subj] ? v.subj : null);
+            const face = cid ? `<img class="vc-face" src="./icons/chars/${cid}.png" style="border-color:${c}" onerror="this.style.display='none'" alt="">` : '';
             return `<div class="vc-row" style="--vc:${c}">
-              <span class="vc-name">${v.name}</span>
+              <span class="vc-who">${face}<span class="vc-name">${v.name}</span></span>
               <span class="vc-line">${v.line}</span>
             </div>`;
           }).join('')}
@@ -375,6 +377,9 @@
 
   // 法律→キャラ(顔アイコン)の対応。表の列ヘッダや記憶の宮殿で使う
   const LAW_CHARS = [
+    [/船員/, 'shain'],            // サブ制度キャラ(男性。図鑑には載せない)
+    [/日雇/, 'hiyatoi'],
+    [/国家公務員/, 'kokka'],
     [/労働基準|労基/, 'kijun'],
     [/安全衛生|安衛/, 'anei'],
     [/労災/, 'rosai'],
