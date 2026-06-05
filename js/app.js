@@ -122,12 +122,14 @@
   };
 
   // ============================ ホーム ======================================
+  let homeSubj = null;   // ホームの科目フィルタ(null=すべて)
+
   function renderHome(now) {
     const s = computeStats(now);
     const view = $('#view');
 
-    // 各テーマの「学習の遅れ」を算出して遅れ順(動的)に並べる
-    const rows = topics().map((t) => {
+    // 各テーマの定着率を算出。定着の低い(=身についていない)ものを上に
+    let rows = topics().map((t) => {
       const cards = withState(t.cards.map((card, idx) => ({ topic: t, idx, card })), now);
       const total = cards.length;
       const studiedCards = cards.filter((c) => c.state.last);
@@ -137,24 +139,29 @@
         ? studiedCards.reduce((a, c) => a + window.SRS.retention(c.state, now), 0) / studied
         : 0;
       const coverage = total ? studied / total : 0;
-      const mastery = coverage * avgRet;   // 0..1 いま身についている度合い
-      const lag = 1 - mastery;             // 大きいほど遅れている = 上位
-      return { t, total, studied, due, avgRet, coverage, lag };
-    }).sort((a, b) => b.lag - a.lag || b.due - a.due || b.total - a.total);
+      return { t, total, studied, due, avgRet, coverage };
+    }).sort((a, b) => a.avgRet - b.avgRet || b.due - a.due || b.total - a.total);
 
-    const lagColor = (lag) =>
-      lag >= 0.66 ? '#ef4444' : lag >= 0.33 ? '#f59e0b' : '#22c55e';
+    // 科目フィルタ
+    if (homeSubj) rows = rows.filter((r) => r.t.subjects.includes(homeSubj));
+
+    // 出現する科目を SUBJECTS の順で
+    const present = new Set();
+    topics().forEach((t) => t.subjects.forEach((sj) => present.add(sj)));
+    const subjList = Object.keys(SUBJECTS).filter((sj) => present.has(sj));
+
+    const retColor = (avgRet) =>
+      avgRet >= 0.7 ? '#22c55e' : avgRet >= 0.4 ? '#f59e0b' : '#ef4444';
 
     const rowHTML = rows.map((r, i) => {
-      const untouched = r.studied === 0;       // まだ開いていない科目
       const ret = Math.round(r.avgRet * 100);
       let badge;
-      if (untouched) badge = '<span class="prio-badge new">未学習</span>';
+      if (r.studied === 0) badge = '<span class="prio-badge new">未学習</span>';
       else if (r.due > 0) badge = `<span class="prio-badge due">復習 ${r.due}</span>`;
       else badge = `<span class="prio-badge ok">定着 ${ret}%</span>`;
       return `
-        <tr class="prio-row${untouched ? ' is-untouched' : ''}" data-topic="${r.t.id}">
-          <td class="prio-rank"><span class="rank-no" style="--rc:${untouched ? '#cbd5e1' : lagColor(r.lag)}">${i + 1}</span></td>
+        <tr class="prio-row" data-topic="${r.t.id}">
+          <td class="prio-rank"><span class="rank-no" style="--rc:${retColor(r.avgRet)}">${i + 1}</span></td>
           <td class="prio-main">
             <div class="prio-title">${r.t.title}</div>
             <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
@@ -170,12 +177,17 @@
       <section class="hero">
         <h2>横断学習で、点をつなぐ。</h2>
       </section>
+      <div class="subj-filter">
+        <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">すべて</button>
+        ${subjList.map((sj) =>
+          `<button class="sfchip${homeSubj === sj ? ' on' : ''}" data-subj="${sj}" style="--c:${SUBJECTS[sj].color}">${SUBJECTS[sj].short}</button>`).join('')}
+      </div>
       <div class="card-box prio-box">
         <div class="prio-head">
           <h3>横断テーマ</h3>
-          <span class="small muted">学習の遅れ順</span>
+          <span class="small muted">定着の低い順</span>
         </div>
-        <table class="prio-table"><tbody>${rowHTML}</tbody></table>
+        <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
       ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
         🔁 間違えた問題だけ復習(${s.weak}枚)
@@ -184,6 +196,8 @@
         📖 過去問だけ復習(${s.imported}枚)
       </button>` : ''}`;
 
+    $$('.sfchip', view).forEach((b) =>
+      b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
       el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
     const weakBtn = $('#start-weak');
@@ -219,7 +233,6 @@
       <button class="link-back" id="back">← テーマ一覧</button>
       <section class="hero compact">
         <h2>${topic.title}</h2>
-        <p class="muted">${topic.tagline}</p>
         <div class="subj-tags">${topic.subjects.map(subjTag).join('')}</div>
       </section>
       <div class="card-box">
@@ -298,7 +311,6 @@
     return `
       <div class="topic-card" data-topic="${t.id}">
         <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}枚</span></div>
-        <p class="muted small">${t.tagline}</p>
         <div class="subj-tags">${t.subjects.map(subjTag).join('')}</div>
         <div class="topic-prog">
           <div class="mini-track"><div class="mini-fill" style="width:${cards.length ? studied / cards.length * 100 : 0}%"></div></div>

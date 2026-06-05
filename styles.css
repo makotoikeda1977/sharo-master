@@ -203,13 +203,19 @@ body {
 .prio-badge.new { background: #f1f5f9; color: #94a3b8; }
 .prio-badge.due { background: #fef3c7; color: #b45309; }
 .prio-badge.ok  { background: #dcfce7; color: #15803d; }
-/* まだ開いていない科目はグレーアウト */
-.prio-row.is-untouched .prio-title { color: var(--muted); font-weight: 600; }
-.prio-row.is-untouched .subj { opacity: .45; filter: grayscale(1); }
-.prio-row.is-untouched .mini-fill { background: #cbd5e1; }
+.prio-empty { padding: 18px 4px; text-align: center; }
 [data-theme="dark"] .prio-badge.new { background: #1e293b; color: #64748b; }
 [data-theme="dark"] .prio-badge.due { background: #3b2f12; color: #fbbf24; }
 [data-theme="dark"] .prio-badge.ok  { background: #14321f; color: #4ade80; }
+
+/* ---- 科目フィルタ(ホーム) ---- */
+.subj-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.sfchip {
+  border: 1px solid var(--line); background: var(--surface); color: var(--muted);
+  border-radius: 999px; padding: 5px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+}
+.sfchip.on { background: var(--c, var(--brand)); border-color: var(--c, var(--brand)); color: #fff; }
+.sfchip:first-child.on { background: var(--ink); border-color: var(--ink); }
 
 /* ---- 比較テーブル ---- */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
