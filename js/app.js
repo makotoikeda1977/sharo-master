@@ -88,7 +88,7 @@
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem('sharo.theme', t); } catch (e) {}
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#3b82f6');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#0d1525' : '#284d7f');
     const btn = document.getElementById('theme-toggle');
     if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
   }
