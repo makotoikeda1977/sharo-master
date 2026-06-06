@@ -184,13 +184,6 @@
     }).join('');
 
     view.innerHTML = `
-      <div class="card-box char-gallery">
-        <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
-        <div class="char-row">
-          ${LAW_CHARACTERS.map((c) =>
-            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
-        </div>
-      </div>
       <div class="subj-filter">
         <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">すべて</button>
         ${subjList.map((sj) =>
@@ -210,8 +203,6 @@
         📖 過去問だけ復習(${s.imported}枚)
       </button>` : ''}`;
 
-    const openChars = $('#open-chars');
-    if (openChars) openChars.addEventListener('click', () => go('chars'));
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
@@ -1011,6 +1002,14 @@
         <p class="muted">場所と"ありえない絵"で、社労士の暗記を定着させる方法</p>
       </section>
 
+      <div class="card-box char-gallery">
+        <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
+        <div class="char-row">
+          ${LAW_CHARACTERS.map((c) =>
+            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
+        </div>
+      </div>
+
       <div class="card-box">
         <h3>記憶の宮殿とは</h3>
         <p class="mg-text">古代から使われる記憶術(場所法／メソッド・オブ・ロサイ)。よく知っている場所(自宅など)を決まった順路で歩き、覚えたいことを各場所に"絵"として置きます。あとで頭の中で同じ順路を歩けば、絵が手がかりになって思い出せます。脳は「場所」の記憶が得意なので、その力に暗記を相乗りさせる仕組みです(研究でも長期の記憶向上が確認されています)。</p>
@@ -1060,6 +1059,8 @@
       </div>
 
       <button class="btn-primary big" id="mg-cross">🔀 横断テーマで宮殿の一例を見る</button>`;
+    const openChars = $('#open-chars');
+    if (openChars) openChars.addEventListener('click', () => go('chars'));
     $('#mg-cross').addEventListener('click', () => go('cross'));
   }
 
