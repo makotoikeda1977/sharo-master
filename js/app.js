@@ -203,11 +203,17 @@
           <div class="home-palace-kicker">知識の宮殿</div>
           <h2>宮殿建設率 ${palacePct}%</h2>
           <p>現段階：<strong>${palaceStage.name}</strong></p>
+          <p class="home-palace-lead">覚えていくほど、あなたの<strong>知識の宮殿</strong>が建っていきます。コツコツ進めて、完成を目指しましょう。</p>
         </div>
         <div class="home-palace-art">
           <img src="./icons/palace/${palaceStage.img}" alt="宮殿建設率 ${palacePct}% ${palaceStage.name}">
         </div>
       </section>
+      <div class="card-box home-palace-about">
+        <h3 class="home-about-title">🏰 「記憶の宮殿」とは？</h3>
+        <p class="small">よく知っている場所（自宅など）に覚えたいことを置き、いつも同じ順路で歩いて思い出す記憶術です。このアプリは横断知識を“宮殿”に配置して覚えます。</p>
+        <button class="btn-ghost" id="open-memory-guide">詳しく見る →</button>
+      </div>
       <div class="card-box char-gallery">
         <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
         <div class="char-row">
@@ -236,6 +242,8 @@
 
     const openChars = $('#open-chars');
     if (openChars) openChars.addEventListener('click', () => go('chars'));
+    const openMem = $('#open-memory-guide');
+    if (openMem) openMem.addEventListener('click', () => go('memory'));
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
