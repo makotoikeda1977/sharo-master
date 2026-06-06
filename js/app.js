@@ -185,7 +185,7 @@
 
     view.innerHTML = `
       <div class="card-box char-gallery">
-        <h3>法律キャラ図鑑</h3>
+        <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
         <div class="char-row">
           ${LAW_CHARACTERS.map((c) =>
             `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
@@ -210,6 +210,8 @@
         📖 過去問だけ復習(${s.imported}枚)
       </button>` : ''}`;
 
+    const openChars = $('#open-chars');
+    if (openChars) openChars.addEventListener('click', () => go('chars'));
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
@@ -927,6 +929,38 @@
       el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
   }
 
+  // ============================ 全員のキャラ紹介 ===========================
+  // サブ制度のキャラ(男性。トップ図鑑には出さないが紹介ページには載せる)
+  const SUB_CHARACTERS = [
+    { id: 'shain',   label: '船員保険' },
+    { id: 'hiyatoi', label: '日雇労働者(雇用保険の特例)' },
+    { id: 'kokka',   label: '国家公務員共済' },
+    { id: 'chiho',   label: '地方公務員共済' },
+    { id: 'shigaku', label: '私学共済' },
+  ];
+  function renderCharIntro() {
+    const view = $('#view');
+    const card = (id, name, law, color) =>
+      `<div class="ci-card">
+        <img src="./icons/chars/${id}.png" style="border-color:${color || '#cbd5e1'}" onerror="this.style.display='none'" alt="">
+        <div class="ci-body"><div class="ci-name">${name}</div><div class="ci-law">${law}</div></div>
+      </div>`;
+    view.innerHTML = `
+      <button class="link-back" id="back">← ホーム</button>
+      <section class="hero compact">
+        <h2>📚 法律キャラ図鑑</h2>
+        <p class="muted">各科目を擬人化したキャラクター。比較表の列ヘッダーや記憶の宮殿にも登場します。</p>
+      </section>
+      <div class="char-intro-grid">
+        ${LAW_CHARACTERS.map((c) => card(c.id, c.name, SUBJECTS[c.id] ? SUBJECTS[c.id].name : c.law, SUBJECTS[c.id] && SUBJECTS[c.id].color)).join('')}
+      </div>
+      <div class="ci-sub-head">サブ制度のキャラ</div>
+      <div class="char-intro-grid">
+        ${SUB_CHARACTERS.map((c) => card(c.id, c.label, 'サブ制度', '#94a3b8')).join('')}
+      </div>`;
+    $('#back').addEventListener('click', () => go('home'));
+  }
+
   // ============================ ルーティング ================================
   // ============================ 覚え方(記憶の宮殿) =========================
   function renderMemoryGuide() {
@@ -985,6 +1019,7 @@
     review: renderReview,
     memory: renderMemoryGuide,
     palace: renderPalace,
+    chars: renderCharIntro,
   };
 
   function go(route, params) {
