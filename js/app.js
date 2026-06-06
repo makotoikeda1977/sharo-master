@@ -88,7 +88,7 @@
     document.documentElement.setAttribute('data-theme', t);
     try { localStorage.setItem('sharo.theme', t); } catch (e) {}
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#0d1525' : '#284d7f');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#3b82f6');
     const btn = document.getElementById('theme-toggle');
     if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
   }
@@ -163,62 +163,32 @@
     const retColor = (avgRet) =>
       avgRet >= 0.7 ? '#22c55e' : avgRet >= 0.4 ? '#f59e0b' : '#ef4444';
 
-    const palaceCoverage = s.total ? s.studied / s.total : 0;
-    const palacePct = Math.round(palaceCoverage * 100);
-    const palaceStage = palaceCoverage < 0.125
-      ? { img: 'palace_0.png', name: '更地' }
-      : palaceCoverage < 0.375
-        ? { img: 'palace_25.png', name: '柱' }
-        : palaceCoverage < 0.625
-          ? { img: 'palace_50.png', name: '外壁' }
-          : palaceCoverage < 0.875
-            ? { img: 'palace_75.png', name: '屋根' }
-            : { img: 'palace_100.png', name: '完成' };
-
     const rowHTML = rows.map((r, i) => {
       const ret = Math.round(r.avgRet * 100);
-      const coveragePct = Math.round(r.coverage * 100);
       let badge;
       if (r.studied === 0) badge = '<span class="prio-badge new">未学習</span>';
       else if (r.due > 0) badge = `<span class="prio-badge due">復習 ${r.due}</span>`;
       else badge = `<span class="prio-badge ok">定着 ${ret}%</span>`;
       return `
-        <button class="prio-card prio-row" data-topic="${r.t.id}" type="button">
-          <span class="prio-rank"><span class="rank-no" style="--rc:${retColor(r.avgRet)}">${i + 1}</span></span>
-          <span class="prio-main">
-            <span class="prio-title">${r.t.title}</span>
-            <span class="subj-tags">${r.t.subjects.map(subjTag).join('')}</span>
-          </span>
-          <span class="prio-stat">
-            <span class="prio-coverage">学習率 ${coveragePct}%</span>
-            <span class="mini-track"><span class="mini-fill" style="width:${coveragePct}%"></span></span>
-            <span class="prio-meta">${badge}<span class="small muted">${r.studied}/${r.total}</span></span>
-          </span>
-        </button>`;
+        <tr class="prio-row" data-topic="${r.t.id}">
+          <td class="prio-rank"><span class="rank-no" style="--rc:${retColor(r.avgRet)}">${i + 1}</span></td>
+          <td class="prio-main">
+            <div class="prio-title">${r.t.title}</div>
+            <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
+          </td>
+          <td class="prio-stat">
+            <div class="mini-track"><div class="mini-fill" style="width:${Math.round(r.coverage * 100)}%"></div></div>
+            <div class="prio-meta">${badge}<span class="small muted">${r.studied}/${r.total}</span></div>
+          </td>
+        </tr>`;
     }).join('');
 
     view.innerHTML = `
-      <section class="home-palace" aria-label="宮殿建設率">
-        <div class="home-palace-copy">
-          <div class="home-palace-kicker">知識の宮殿</div>
-          <h2>宮殿建設率 ${palacePct}%</h2>
-          <p>現段階：<strong>${palaceStage.name}</strong></p>
-          <p class="home-palace-lead">覚えていくほど、あなたの<strong>知識の宮殿</strong>が建っていきます。コツコツ進めて、完成を目指しましょう。</p>
-        </div>
-        <div class="home-palace-art">
-          <img src="./icons/palace/${palaceStage.img}" alt="宮殿建設率 ${palacePct}% ${palaceStage.name}">
-        </div>
-      </section>
-      <div class="card-box home-palace-about">
-        <h3 class="home-about-title">🏰 「記憶の宮殿」とは？</h3>
-        <p class="small">よく知っている場所（自宅など）に覚えたいことを置き、いつも同じ順路で歩いて思い出す記憶術です。このアプリは横断知識を“宮殿”に配置して覚えます。</p>
-        <button class="btn-ghost" id="open-memory-guide">詳しく見る →</button>
-      </div>
       <div class="card-box char-gallery">
         <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
         <div class="char-row">
           ${LAW_CHARACTERS.map((c) =>
-            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span><span class="char-title">${c.title}</span></div>`).join('')}
+            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
         </div>
       </div>
       <div class="subj-filter">
@@ -231,7 +201,7 @@
           <h3>横断テーマ</h3>
           <span class="small muted">定着の低い順</span>
         </div>
-        <div class="prio-grid">${rowHTML || '<div class="prio-empty muted small">該当するテーマがありません</div>'}</div>
+        <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
       ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
         🔁 間違えた問題だけ復習(${s.weak}枚)
@@ -242,8 +212,6 @@
 
     const openChars = $('#open-chars');
     if (openChars) openChars.addEventListener('click', () => go('chars'));
-    const openMem = $('#open-memory-guide');
-    if (openMem) openMem.addEventListener('click', () => go('memory'));
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
@@ -432,16 +400,16 @@
   }
   // 法律キャラ名簿(トップページの図鑑用)
   const LAW_CHARACTERS = [
-    { id: 'kijun', name: '基島規子', title: '労基の姫', law: '労基' },
-    { id: 'anei', name: '守谷衛', title: '安全の守護者', law: '安衛' },
-    { id: 'rosai', name: '災堂咲', title: '労災の戦乙女', law: '労災' },
-    { id: 'koyo', name: '職田めぐみ', title: '雇用の女伯爵', law: '雇用' },
-    { id: 'choshu', name: '収沢徴子', title: '徴収の会計姫', law: '徴収' },
-    { id: 'kenpo', name: '保科碧', title: '健保の聖騎士', law: '健保' },
-    { id: 'konen', name: '厚見年実', title: '厚年の賢者', law: '厚年' },
-    { id: 'kokunen', name: '国原みのり', title: '国年の巫女', law: '国年' },
-    { id: 'roippan', name: '労井美樹', title: '労一の学者', law: '労一' },
-    { id: 'shaippan', name: '市役あい', title: '社一の案内人', law: '社一' },
+    { id: 'kijun', name: '基島規子', law: '労基' },
+    { id: 'anei', name: '守谷衛', law: '安衛' },
+    { id: 'rosai', name: '災堂咲', law: '労災' },
+    { id: 'koyo', name: '職田めぐみ', law: '雇用' },
+    { id: 'choshu', name: '収沢徴子', law: '徴収' },
+    { id: 'kenpo', name: '保科碧', law: '健保' },
+    { id: 'konen', name: '厚見年実', law: '厚年' },
+    { id: 'kokunen', name: '国原みのり', law: '国年' },
+    { id: 'roippan', name: '労井美樹', law: '労一' },
+    { id: 'shaippan', name: '市役あい', law: '社一' },
   ];
 
   // 表の「答え列」を左から順に色分けする(例: 5年=青 / 2年=橙 / 時効にかからない=灰)
@@ -990,10 +958,10 @@
   ];
   function renderCharIntro() {
     const view = $('#view');
-    const card = (id, name, title, law, color) =>
+    const card = (id, name, law, color) =>
       `<div class="ci-card">
         <img src="./icons/chars/${id}.png" style="border-color:${color || '#cbd5e1'}" onerror="this.style.display='none'" alt="">
-        <div class="ci-body"><div class="ci-name">${name}<span>${title ? ` ${title}` : ''}</span></div><div class="ci-law">${law}</div></div>
+        <div class="ci-body"><div class="ci-name">${name}</div><div class="ci-law">${law}</div></div>
       </div>`;
     view.innerHTML = `
       <button class="link-back" id="back">← ホーム</button>
@@ -1002,11 +970,11 @@
         <p class="muted">各科目を擬人化したキャラクター。比較表の列ヘッダーや記憶の宮殿にも登場します。</p>
       </section>
       <div class="char-intro-grid">
-        ${LAW_CHARACTERS.map((c) => card(c.id, c.name, c.title, SUBJECTS[c.id] ? SUBJECTS[c.id].name : c.law, SUBJECTS[c.id] && SUBJECTS[c.id].color)).join('')}
+        ${LAW_CHARACTERS.map((c) => card(c.id, c.name, SUBJECTS[c.id] ? SUBJECTS[c.id].name : c.law, SUBJECTS[c.id] && SUBJECTS[c.id].color)).join('')}
       </div>
       <div class="ci-sub-head">サブ制度のキャラ</div>
       <div class="char-intro-grid">
-        ${SUB_CHARACTERS.map((c) => card(c.id, c.label, '', 'サブ制度', '#94a3b8')).join('')}
+        ${SUB_CHARACTERS.map((c) => card(c.id, c.label, 'サブ制度', '#94a3b8')).join('')}
       </div>`;
     $('#back').addEventListener('click', () => go('home'));
   }
