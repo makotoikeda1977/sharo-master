@@ -509,8 +509,8 @@
     return `<div class="tbl-ov" id="tbl-ov" hidden>
       <div class="tbl-ov-card">
         <div class="tbl-ov-bar"><span class="tbl-ov-title">📊 ${topic.title}</span><button class="tbl-ov-close" id="tbl-ov-close">✕ 閉じる</button></div>
-        <div class="sheet-bar"><button class="chip2" id="ov-sheet-toggle">🟥 赤シート ON</button><span class="sheet-hint small muted" id="ov-sheet-hint">タップで答え表示</span></div>
-        <div class="table-wrap sheet" id="ov-cmp-wrap"><table class="cmp${multiCol ? ' wide' : ''}">${thead}${tbody}</table></div>
+        <div class="sheet-bar"><button class="chip2" id="ov-sheet-toggle">⬜️ 赤シート OFF</button><span class="sheet-hint small muted" id="ov-sheet-hint" style="visibility:hidden">タップで答え表示</span></div>
+        <div class="table-wrap" id="ov-cmp-wrap"><table class="cmp${multiCol ? ' wide' : ''}">${thead}${tbody}</table></div>
       </div>
     </div>`;
   }
@@ -527,7 +527,7 @@
     const wrap = document.getElementById('ov-cmp-wrap');
     const toggle = document.getElementById('ov-sheet-toggle');
     if (wrap && toggle) {
-      let sheetOn = true;
+      let sheetOn = false;  // 表ボタンで開いた直後は赤シートOFF(答えが見えている)
       toggle.addEventListener('click', () => {
         sheetOn = !sheetOn;
         wrap.classList.toggle('sheet', sheetOn);
