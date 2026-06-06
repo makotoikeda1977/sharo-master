@@ -252,6 +252,17 @@ body {
 /* ---- 比較テーブル ---- */
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* 多列(3列以上)の表は自然幅で横スクロール。狭い画面で各セルが潰れないように */
+table.cmp.wide { width: auto; min-width: 100%; }
+table.cmp.wide td, table.cmp.wide th { min-width: 6.5em; }
+table.cmp.wide td.rowhdr { min-width: 5.5em; }
+/* 横スクロール可能なことを示す右端フェード(スクロール領域に position 付与) */
+.table-wrap { position: relative; }
+.table-wrap::after {
+  content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--surface));
+  pointer-events: none; opacity: .9;
+}
 table.cmp th {
   background: #f1f5fd; color: #334155; font-weight: 700; text-align: left;
   padding: 9px 10px; white-space: normal; word-break: break-word; line-height: 1.4;

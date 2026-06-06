@@ -260,7 +260,7 @@
           <span class="sheet-hint small muted">タップで答え表示</span>
         </div>
         <div class="table-wrap sheet" id="cmp-wrap">
-          <table class="cmp">
+          <table class="cmp${multiCol ? ' wide' : ''}">
             <thead><tr>${topic.table.headers.map((h, i) => {
                 const cid = lawCharId(h);
                 const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" onerror="this.style.display='none'" alt="">` : '';
