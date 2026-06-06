@@ -307,7 +307,7 @@
             const cid = v.char || (v.subj && SUBJECTS[v.subj] ? v.subj : null);
             const face = cid ? `<img class="vc-face" src="./icons/chars/${cid}.png" style="border-color:${c}" onerror="this.style.display='none'" alt="">` : '';
             return `<div class="vc-row" style="--vc:${c}">
-              <span class="vc-who">${face}<span class="vc-name">${v.name}</span></span>
+              <span class="vc-who">${face}<span class="vc-name">${v.subj && SUBJECTS[v.subj] ? SUBJECTS[v.subj].short : v.name}</span></span>
               <span class="vc-line">${v.line}</span>
             </div>`;
           }).join('')}
