@@ -440,6 +440,11 @@ table.cmp td.ans, table.cmp td.wordcloze {
 }
 .ret-badge.new { color: #16a34a; background: #dcfce7; }
 .q { font-size: 19px; font-weight: 700; line-height: 1.5; }
+.q-subj {
+  display: inline-block; font-size: 12px; font-weight: 800; color: #fff;
+  background: var(--c, #64748b); border-radius: 7px; padding: 2px 9px;
+  margin-right: 8px; vertical-align: middle; letter-spacing: .02em;
+}
 .hint {
   margin-top: 14px; font-size: 13px; color: var(--brand-d); cursor: pointer;
   align-self: flex-start; border-bottom: 1px dashed var(--brand);

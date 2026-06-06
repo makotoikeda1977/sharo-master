@@ -494,6 +494,23 @@
     drawReview();
   }
 
+  // カードの問題文・解説の法令名から、その1問の科目を判定(横断テーマ用)
+  function detectCardSubject(card, topic) {
+    const text = (card.q || '') + ' ' + (card.a || '');
+    const rules = [
+      ['kijun',   /労働基準法/],
+      ['anei',    /労働安全衛生法/],
+      ['rosai',   /労働者災害補償保険法|労災保険法/],
+      ['koyo',    /雇用保険法/],
+      ['kenpo',   /健康保険法/],
+      ['konen',   /厚生年金保険法/],
+      ['kokunen', /国民年金法/],
+      ['choshu',  /労働保険の保険料の徴収|労働保険徴収法|徴収法|労働保険の保険関係/],
+    ];
+    for (const [id, re] of rules) if (re.test(text)) return id;
+    return (topic.subjects && topic.subjects[0]) || null;
+  }
+
   function drawReview() {
     const view = $('#view');
     const now = Date.now();
@@ -525,6 +542,7 @@
     const card = item.card;
     const ret = item.state.last ? Math.round(window.SRS.retention(item.state, now) * 100) : null;
     const ox = oxAnswer(card);          // '○' | '×' | null
+    const subj = detectCardSubject(card, item.topic);
     const ans = session.answered;       // {choice, correct} | null
     const showAnswer = session.revealed || !!ans;
 
@@ -545,7 +563,7 @@
           ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
           ${ret !== null ? `<span class="ret-badge">記憶 ${ret}%</span>` : '<span class="ret-badge new">NEW</span>'}
         </div>
-        <div class="q">${card.q}</div>
+        <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
         <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.a}</div>
       </div>
