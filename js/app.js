@@ -714,77 +714,7 @@
     drawReview();
   }
 
-  // ============================ 成長度 ======================================
-  function renderGrowth(now) {
-    const view = $('#view');
-    const s = computeStats(now);
-    view.innerHTML = `
-      <section class="hero compact"><h2>成長と忘却の可視化</h2>
-        <p class="muted">学習の積み上げと、これからの忘れ方</p></section>
-
-
-      <div class="card-box">
-        <h3>設定</h3>
-        <div class="setting-row">
-          <span class="sr-label">復習リマインド
-            <span class="sr-sub">${Notify.supported()
-              ? 'アプリを開いた時に、未消化の復習を1日1回通知します'
-              : 'お使いのブラウザは通知に対応していません'}</span>
-          </span>
-          <label class="switch">
-            <input type="checkbox" id="remind-toggle" ${Notify.enabled() ? 'checked' : ''} ${Notify.supported() ? '' : 'disabled'} />
-            <span class="slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="card-box">
-        <h3>問題のインポート</h3>
-        <p class="muted small">CSV / JSON で自作問題や過去問をまとめて追加できます${
-          customCount() ? `(現在 <b>${customCount()}</b> 件のインポート済みテーマ)` : ''}</p>
-        <div class="data-actions">
-          <button class="btn-primary" id="import-open">問題をインポート</button>
-          ${customCount() ? '<button class="btn-ghost danger" id="custom-clear">インポート分を削除</button>' : ''}
-        </div>
-      </div>
-
-      <div class="card-box">
-        <h3>データ管理</h3>
-        <div class="data-actions">
-          <button class="btn-ghost" id="export">バックアップを書き出す</button>
-          <button class="btn-ghost danger" id="reset">学習記録をリセット</button>
-        </div>
-      </div>`;
-
-    const remind = $('#remind-toggle');
-    if (remind) {
-      remind.addEventListener('change', async () => {
-        if (remind.checked) {
-          const ok = await Notify.enable();
-          if (!ok) { remind.checked = false; alert('通知が許可されませんでした。ブラウザの設定をご確認ください。'); }
-        } else {
-          Notify.disable();
-        }
-      });
-    }
-
-    $('#import-open').addEventListener('click', openImport);
-    const clearBtn = $('#custom-clear');
-    if (clearBtn) clearBtn.addEventListener('click', () => {
-      if (confirm('インポートした問題をすべて削除します。よろしいですか?(組み込みの問題は残ります)')) {
-        window.Store.setCustomTopics([]);
-        renderGrowth(Date.now());
-      }
-    });
-
-    $('#export').addEventListener('click', exportData);
-    $('#reset').addEventListener('click', () => {
-      if (confirm('すべての学習記録を消します。よろしいですか?')) {
-        window.Store.reset();
-        renderGrowth(Date.now());
-      }
-    });
-  }
+  // 成長度ページ(renderGrowth)は廃止・削除。ナビからも撤去済み。
 
   function customCount() {
     return window.Store.getCustomTopics().length;
@@ -877,7 +807,7 @@
       if (result.errors.length) info += `(スキップ ${result.errors.length}件)`;
       alert(info);
       close();
-      renderGrowth(Date.now());
+      go('home');
     });
   }
 
