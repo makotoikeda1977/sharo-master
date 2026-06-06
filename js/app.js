@@ -246,7 +246,20 @@
     const topic = topics().find((t) => t.id === topicId);
     // 答え列が2つ以上ある表は、列ごとに色を分けて区別しやすくする
     const multiCol = !!(topic.table && topic.table.headers && topic.table.headers.length >= 3);
+    const noMask = (topic.table && Array.isArray(topic.table.noMaskCols)) ? topic.table.noMaskCols : [];
     const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
+    const merge = !!(topic.table && topic.table.mergeFirstCol);
+    const span = [];
+    if (merge) {
+      const rows = topic.table.rows;
+      for (let ri = 0; ri < rows.length; ) {
+        let n = 1;
+        while (ri + n < rows.length && rows[ri + n][0] === rows[ri][0]) n++;
+        span[ri] = n;
+        for (let k = 1; k < n; k++) span[ri + k] = 0;
+        ri += n;
+      }
+    }
     view.innerHTML = `
       <button class="link-back" id="back">← テーマ一覧</button>
       <section class="hero compact">
@@ -274,8 +287,17 @@
                     ? SUBJECTS[topic.subjects[0]].color : null);
                 const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
                 return `<tr${trA}>${r.map((c, i) => {
-                  if (i === 0) return `<td class="rowhdr">${c}</td>`;
+                  if (i === 0) {
+                    if (!merge) return `<td class="rowhdr">${c}</td>`;
+                    if (span[ri] === 0) return '';
+                    if (span[ri] > 1) return `<td class="rowhdr merged" rowspan="${span[ri]}">${c}</td>`;
+                    return `<td class="rowhdr">${c}</td>`;
+                  }
                   if (!c) return '<td></td>';
+                  if (noMask.includes(i)) {
+                    const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+                    return `<td class="ans nomask${multiCol ? ' colc' : ''}"${style}>${c}</td>`;
+                  }
                   // セル内に **太字** があれば「語句単位の赤シート」、なければセル全体マスク
                   const hasCloze = c.indexOf('**') >= 0;
                   const cls = 'ans' + (multiCol ? ' colc' : '') + (hasCloze ? ' wordcloze' : '');

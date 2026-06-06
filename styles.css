@@ -269,6 +269,7 @@ table.cmp th {
 }
 table.cmp td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-align: top; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 table.cmp td.rowhdr { font-weight: 700; color: var(--ink); white-space: normal; word-break: break-word; }
+table.cmp td.rowhdr.merged { vertical-align: middle; }
 table.cmp tbody tr:nth-child(even) td { background: #fafbfe; }
 
 /* ---- 法律ごとの色分け(行) ---- */
