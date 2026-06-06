@@ -469,7 +469,7 @@
     const imported = !!(params && params.imported);
     const queue = buildQueue(now, { topic: params && params.topic, weak, imported });
     session = {
-      queue, pos: 0, revealed: false, answered: null, done: 0, again: 0,
+      queue, pos: 0, revealed: false, answered: null, graded: false, done: 0, again: 0,
       topicId: params && params.topic, weak, imported,
     };
     drawReview();
@@ -496,6 +496,86 @@
   const CHAR_NAMES = { kijun: '基島規子', anei: '守谷衛', rosai: '災堂咲', koyo: '職田めぐみ', choshu: '収沢徴子', kenpo: '保科碧', konen: '厚見年実', kokunen: '国原みのり', roippan: '労井美樹', shaippan: '市役あい' };
   // 解説中の [[...]] を赤太字に
   function hlMark(t) { return String(t == null ? '' : t).replace(/\[\[(.+?)\]\]/g, '<b class="hot">$1</b>'); }
+
+  // 復習中に開く「横断表オーバーレイ」のHTML(renderCrossの表描画を踏襲)
+  function reviewTableHTML(topic) {
+    if (!topic || !topic.table) return '';
+    const t = topic.table;
+    const multiCol = !!(t.headers && t.headers.length >= 3);
+    const noMask = Array.isArray(t.noMaskCols) ? t.noMaskCols : [];
+    const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
+    const merge = !!t.mergeFirstCol;
+    const span = [];
+    if (merge) {
+      const rows = t.rows;
+      for (let ri = 0; ri < rows.length; ) {
+        let n = 1;
+        while (ri + n < rows.length && rows[ri + n][0] === rows[ri][0]) n++;
+        span[ri] = n;
+        for (let k = 1; k < n; k++) span[ri + k] = 0;
+        ri += n;
+      }
+    }
+    const thead = `<thead><tr>${t.headers.map((h, i) => {
+      const cid = lawCharId(h);
+      const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" onerror="this.style.display='none'" alt="">` : '';
+      const cls = (multiCol && i > 0) ? ' class="colh"' : '';
+      const style = (multiCol && i > 0) ? ` style="--colc:${colAccent(i)}"` : '';
+      return `<th${cls}${style}>${face}${h}</th>`;
+    }).join('')}</tr></thead>`;
+    const tbody = `<tbody>${t.rows.map((r, ri) => {
+      const lc = rowLawColor(r[0]) || (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]] ? SUBJECTS[topic.subjects[0]].color : null);
+      const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
+      return `<tr${trA}>${r.map((c, i) => {
+        if (i === 0) {
+          if (!merge) return `<td class="rowhdr">${c}</td>`;
+          if (span[ri] === 0) return '';
+          if (span[ri] > 1) return `<td class="rowhdr merged" rowspan="${span[ri]}">${c}</td>`;
+          return `<td class="rowhdr">${c}</td>`;
+        }
+        if (!c) return '<td></td>';
+        if (noMask.includes(i)) {
+          const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+          return `<td class="ans nomask${multiCol ? ' colc' : ''}"${style}>${c}</td>`;
+        }
+        const hasCloze = c.indexOf('**') >= 0;
+        const cls = 'ans' + (multiCol ? ' colc' : '') + (hasCloze ? ' wordcloze' : '');
+        const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+        const inner = hasCloze ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>') : `<span class="mask">${c}</span>`;
+        return `<td class="${cls}"${style}>${inner}</td>`;
+      }).join('')}</tr>`;
+    }).join('')}</tbody>`;
+    return `<div class="tbl-ov" id="tbl-ov" hidden>
+      <div class="tbl-ov-card">
+        <div class="tbl-ov-bar"><span class="tbl-ov-title">📊 ${topic.title}</span><button class="tbl-ov-close" id="tbl-ov-close">✕ 閉じる</button></div>
+        <div class="sheet-bar"><button class="chip2" id="ov-sheet-toggle">🟥 赤シート ON</button><span class="sheet-hint small muted" id="ov-sheet-hint">タップで答え表示</span></div>
+        <div class="table-wrap sheet" id="ov-cmp-wrap"><table class="cmp${multiCol ? ' wide' : ''}">${thead}${tbody}</table></div>
+      </div>
+    </div>`;
+  }
+
+  // 表オーバーレイの開閉＋赤シートを配線
+  function wireReviewTable() {
+    const ov = document.getElementById('tbl-ov');
+    const openBtn = document.getElementById('tbl-open');
+    if (!ov || !openBtn) return;
+    openBtn.addEventListener('click', () => { ov.hidden = false; });
+    const closeBtn = document.getElementById('tbl-ov-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => { ov.hidden = true; });
+    ov.addEventListener('click', (e) => { if (e.target === ov) ov.hidden = true; });
+    const wrap = document.getElementById('ov-cmp-wrap');
+    const toggle = document.getElementById('ov-sheet-toggle');
+    if (wrap && toggle) {
+      let sheetOn = true;
+      toggle.addEventListener('click', () => {
+        sheetOn = !sheetOn;
+        wrap.classList.toggle('sheet', sheetOn);
+        toggle.textContent = sheetOn ? '🟥 赤シート ON' : '⬜️ 赤シート OFF';
+        const hint = document.getElementById('ov-sheet-hint'); if (hint) hint.style.visibility = sheetOn ? 'visible' : 'hidden';
+      });
+      $$('.mask, .cloze', wrap).forEach((m) => m.addEventListener('click', () => { if (sheetOn) m.classList.toggle('revealed'); }));
+    }
+  }
 
   function drawReview() {
     const view = $('#view');
@@ -555,7 +635,7 @@
       </div>
       <div class="rv-actions">
         ${ans
-          ? `<button class="btn-primary big" id="next">次へ</button>`
+          ? `<button class="btn-primary big" id="next">次へ</button><button class="btn-ghost big" id="retry">🔄 同じ問題をもう一度</button>`
           : ox
             ? `<div class="ox-buttons">
                  <button class="ox-btn" data-ox="○" style="--c:#dc2626">○ 正しい</button>
@@ -566,12 +646,15 @@
                   `<button class="grade" data-grade="${id}" style="--c:${g.color}">
                      <span class="g-label">${g.label}</span></button>`).join('')
               : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
-      </div>`;
+      </div>
+      ${item.topic.table ? `<button class="tbl-fab" id="tbl-open">📊 表</button>` : ''}
+      ${reviewTableHTML(item.topic)}`;
 
     // 画面遷移ボタン(常時): もどる=この復習をやめて戻る / スキップ=採点せず次へ
     $('#rv-exit').addEventListener('click', () =>
       go(session.topicId ? 'cross' : 'home', session.topicId ? { topic: session.topicId } : null));
     $('#rv-skip').addEventListener('click', skipCard);
+    wireReviewTable();
 
     if (card.hint) {
       const h = $('#hint');
@@ -580,6 +663,8 @@
     document.onkeydown = null;
     if (ans) {
       $('#next').addEventListener('click', nextCard);
+      const rt = $('#retry');
+      if (rt) rt.addEventListener('click', () => { session.answered = null; drawReview(); });
       document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextCard(); } };
     } else if (ox) {
       $$('.ox-btn', view).forEach((b) => b.addEventListener('click', () => answerOX(b.dataset.ox)));
@@ -621,16 +706,19 @@
     const now = Date.now();
     const item = session.queue[session.pos];
     const correct = (choice === oxAnswer(item.card));
-    const gradeId = correct ? 'good' : 'again';
-    const newState = window.SRS.review(item.state, gradeId, now);
-    window.Store.setCardState(item.topic.id, item.idx, newState);
-    window.Store.logReview({
-      t: now, topic: item.topic.id, idx: item.idx,
-      grade: gradeId, stability: newState.stability,
-      retention: item.state.last ? window.SRS.retention(item.state, now) : 0,
-    });
-    session.done++;
-    if (!correct) { session.again++; session.queue.push({ ...item, state: newState }); }
+    if (!session.graded) {  // SRS採点・記録は初回のみ(「もう一度」は練習なので再採点しない)
+      const gradeId = correct ? 'good' : 'again';
+      const newState = window.SRS.review(item.state, gradeId, now);
+      window.Store.setCardState(item.topic.id, item.idx, newState);
+      window.Store.logReview({
+        t: now, topic: item.topic.id, idx: item.idx,
+        grade: gradeId, stability: newState.stability,
+        retention: item.state.last ? window.SRS.retention(item.state, now) : 0,
+      });
+      session.done++;
+      if (!correct) { session.again++; session.queue.push({ ...item, state: newState }); }
+      session.graded = true;
+    }
     session.answered = { choice, correct };
     drawReview();
   }
@@ -640,6 +728,7 @@
     session.pos++;
     session.revealed = false;
     session.answered = null;
+    session.graded = false;
     drawReview();
   }
 
@@ -649,6 +738,7 @@
     session.pos++;
     session.revealed = false;
     session.answered = null;
+    session.graded = false;
     drawReview();
   }
 

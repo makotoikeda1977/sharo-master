@@ -634,3 +634,28 @@ table.cmp th:first-child { text-align: left; }
 .kai-name { font-weight: 800; font-size: 14px; }
 .kai-text { font-size: 14px; line-height: 1.7; }
 .a b.hot { color: #dc2626; font-weight: 800; }
+
+/* ---- 復習中に開く「📊表」ボタン＋横断表オーバーレイ ---- */
+.tbl-fab {
+  position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 40;
+  background: var(--brand); color: #fff; border: none; border-radius: 999px;
+  padding: 11px 17px; font-size: 14px; font-weight: 800; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(59,130,246,.45);
+}
+.tbl-fab:active { transform: scale(.97); }
+.tbl-ov {
+  position: fixed; inset: 0; z-index: 80; background: rgba(15,23,42,.55);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 30px 10px; overflow-y: auto;
+}
+.tbl-ov[hidden] { display: none; }
+.tbl-ov-card {
+  background: var(--surface); border-radius: 16px; width: 100%; max-width: var(--maxw);
+  padding: 14px; box-shadow: var(--shadow);
+}
+.tbl-ov-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.tbl-ov-title { font-weight: 800; font-size: 15px; }
+.tbl-ov-close {
+  background: none; border: 1px solid var(--line); border-radius: 9px;
+  padding: 7px 13px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--ink); white-space: nowrap;
+}
