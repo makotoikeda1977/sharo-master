@@ -572,20 +572,23 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 1
 .answer-flash {
   position: fixed; inset: 0; z-index: 60;
   display: grid; place-items: center;
-  font-size: min(78vw, 480px); font-weight: 900; line-height: 1;
-  color: #fff;
-  -webkit-text-stroke: 8px #fff;
-  text-shadow: 0 8px 30px rgba(0,0,0,.4);
+  font-size: min(85vw, 520px); font-weight: 900; line-height: 1;
   pointer-events: none;
-  animation: flashpop .8s ease-out forwards;
+  animation: flashpop .9s ease-out forwards;
 }
-.answer-flash.ok { background: rgba(220,38,38,.94); }   /* 正解も赤 全面 */
-.answer-flash.ng { background: rgba(220,38,38,.94); }   /* 不正解=赤 全面 */
+/* 正解(○)=赤、不正解(×)=青。○×ボタンと色を統一 */
+.answer-flash.ok {
+  color: #dc2626;
+  text-shadow: 0 8px 30px rgba(220,38,38,.25);
+}
+.answer-flash.ng {
+  color: #2563eb;
+  text-shadow: 0 8px 30px rgba(37,99,235,.25);
+}
 @keyframes flashpop {
-  0%   { opacity: 0; transform: scale(.6); }
-  15%  { opacity: 1; transform: scale(1.18); }
-  30%  { transform: scale(.98); }
-  45%  { transform: scale(1.02); }
+  0%   { opacity: 0; transform: scale(.5); }
+  20%  { opacity: .95; transform: scale(1.08); }
+  55%  { opacity: .92; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
 
