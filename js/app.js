@@ -531,7 +531,7 @@
           ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
           ${ret !== null ? `<span class="ret-badge">記憶 ${ret}%</span>` : '<span class="ret-badge new">NEW</span>'}
         </div>
-        <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q}</div>
+        <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q.replace(/^【[^】]*】\s*/, '')}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
         <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.a}</div>
       </div>
