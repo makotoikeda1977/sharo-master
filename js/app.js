@@ -492,6 +492,11 @@
     return (topic.subjects && topic.subjects[0]) || null;
   }
 
+  // 科目id→キャラ名(顔は icons/chars/<科目id>.png)
+  const CHAR_NAMES = { kijun: '基島規子', anei: '守谷衛', rosai: '災堂咲', koyo: '職田めぐみ', choshu: '収沢徴子', kenpo: '保科碧', konen: '厚見年実', kokunen: '国原みのり', roippan: '労井美樹', shaippan: '市役あい' };
+  // 解説中の [[...]] を赤太字に
+  function hlMark(t) { return String(t == null ? '' : t).replace(/\[\[(.+?)\]\]/g, '<b class="hot">$1</b>'); }
+
   function drawReview() {
     const view = $('#view');
     const now = Date.now();
@@ -546,7 +551,7 @@
         </div>
         <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q.replace(/^【[^】]*】\s*/, '')}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
-        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.a}</div>
+        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.p ? `<div class="kai-point"><span class="kai-plbl">📌 ポイント</span>${card.p}</div>` : ''}${subj && SUBJECTS[subj] ? `<div class="kai-spk"><img class="kai-face" src="./icons/chars/${subj}.png" style="border-color:${SUBJECTS[subj].color}" onerror="this.style.display='none'" alt=""><span class="kai-name" style="color:${SUBJECTS[subj].color}">${CHAR_NAMES[subj] || SUBJECTS[subj].short}（${SUBJECTS[subj].short}）</span></div>` : ''}<div class="kai-text">${hlMark(card.a)}</div></div>
       </div>
       <div class="rv-actions">
         ${ans
