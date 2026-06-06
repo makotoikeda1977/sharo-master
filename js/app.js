@@ -416,6 +416,15 @@
   // ============================ 復習(アクティブリコール) ==================
   let session = null;
 
+  // 出題順のランダム化(Fisher-Yates)。新規カードを毎回違う順で出す。
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
   function buildQueue(now, opts) {
     const topicId = opts && opts.topic;
     let cards = withState(allCards(), now);
@@ -434,8 +443,8 @@
     }
 
     const due = cards.filter((c) => c.state.last && window.SRS.isDue(c.state, now));
-    const fresh = cards.filter((c) => !c.state.last);
-    // 期限切れがひどい順 → 新規 の順に。1セッション最大20枚
+    const fresh = shuffle(cards.filter((c) => !c.state.last));
+    // 期限切れがひどい順 → 新規(順番はランダム) の順に。1セッション最大20枚
     due.sort((a, b) => a.state.due - b.state.due);
     return [...due, ...fresh].slice(0, 20);
   }
