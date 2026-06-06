@@ -595,7 +595,7 @@
       </div>
       <div class="rv-actions">
         ${ans
-          ? `<button class="btn-primary big" id="next">次へ</button><button class="btn-ghost big" id="retry">🔄 同じ問題をもう一度</button>`
+          ? `<button class="btn-primary big" id="next">次へ</button>`
           : ox
             ? `<div class="ox-buttons">
                  <button class="ox-btn" data-ox="○" style="--c:#dc2626">○ 正しい</button>
@@ -623,8 +623,6 @@
     document.onkeydown = null;
     if (ans) {
       $('#next').addEventListener('click', nextCard);
-      const rt = $('#retry');
-      if (rt) rt.addEventListener('click', () => { session.answered = null; drawReview(); });
       document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextCard(); } };
     } else if (ox) {
       $$('.ox-btn', view).forEach((b) => b.addEventListener('click', () => answerOX(b.dataset.ox)));
@@ -726,23 +724,6 @@
 
 
       <div class="card-box">
-        <h3>学習量の推移</h3>
-        <p class="muted small">日別の復習回数(直近30日)</p>
-        <canvas id="growth-line" class="chart"></canvas>
-      </div>
-
-      <div class="card-box">
-        <h3>忘却曲線(代表カード)</h3>
-        <p class="muted small">よく復習したカードほど右肩でゆるやかに(忘れにくく)なる</p>
-        <canvas id="growth-curve" class="chart tall"></canvas>
-      </div>
-
-      <div class="card-box">
-        <h3>科目別 習得度</h3>
-        <div id="mastery" class="bars"></div>
-      </div>
-
-      <div class="card-box">
         <h3>設定</h3>
         <div class="setting-row">
           <span class="sr-label">復習リマインド
@@ -774,23 +755,6 @@
           <button class="btn-ghost danger" id="reset">学習記録をリセット</button>
         </div>
       </div>`;
-
-    // 学習量の推移
-    window.Charts.growthLine($('#growth-line'), dailySeries(30));
-
-    // 忘却曲線: 学習済カードのうち stability 上位3枚を代表に
-    const studied = withState(allCards(), now).filter((c) => c.state.last);
-    studied.sort((a, b) => b.state.stability - a.state.stability);
-    const palette = ['#3b82f6', '#22c55e', '#f59e0b'];
-    const curves = studied.slice(0, 3).map((c, i) => ({
-      stability: c.state.stability, last: c.state.last, color: palette[i],
-    }));
-    if (!curves.length) curves.push({ stability: 1, last: now, color: '#cbd5e1', dim: true });
-    const horizon = Math.max(14, ...curves.map((c) => c.stability)) * 1.5;
-    window.Charts.forgettingCurve($('#growth-curve'), curves, now, horizon);
-
-    // 科目別習得度
-    window.Charts.masteryBars($('#mastery'), subjectMastery(now));
 
     const remind = $('#remind-toggle');
     if (remind) {
