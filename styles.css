@@ -305,6 +305,13 @@ table.cmp td.wordcloze .cloze {
 .sheet table.cmp td.wordcloze .cloze.revealed {
   background: transparent; color: #be123c;
 }
+/* 赤シートをめくった答えが長いとき、横に伸びず適切に折り返す */
+table.cmp td.ans, table.cmp td.wordcloze {
+  overflow-wrap: anywhere; word-break: break-word; line-height: 1.55;
+}
+.sheet table.cmp td.ans .mask.revealed {
+  overflow-wrap: anywhere; word-break: break-word;
+}
 .row-x { color: #ef4444; font-weight: 800; margin-right: 5px; }
 
 /* ---- 表テスト ---- */
