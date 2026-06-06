@@ -218,31 +218,107 @@ body {
 .mini-fill { height: 100%; background: linear-gradient(90deg, var(--brand), var(--accent-d)); }
 
 /* ---- 横断テーマ 優先順位テーブル(ホーム) ---- */
-.prio-box { padding: 16px 16px 8px; }
+.home-palace {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 18px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(127, 178, 223, .34);
+  border-radius: 22px;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.96), rgba(217,236,255,.74)),
+    radial-gradient(circle at 50% 100%, rgba(201,162,39,.16), transparent 45%);
+  box-shadow: var(--shadow);
+}
+.home-palace-copy { text-align: center; position: relative; z-index: 1; }
+.home-palace-kicker {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 4px; padding: 3px 10px; border-radius: 999px;
+  background: var(--gold-soft); color: #7b6317;
+  font-size: 11px; font-weight: 800;
+}
+.home-palace h2 {
+  margin: 0;
+  color: var(--brand-d);
+  font-size: 23px;
+  line-height: 1.25;
+}
+.home-palace p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.home-palace strong { color: var(--gold); }
+.home-palace-art {
+  display: flex; justify-content: center; align-items: end;
+  min-height: 164px; margin-top: 8px;
+}
+.home-palace-art img {
+  display: block;
+  width: min(84%, 390px);
+  max-height: 190px;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 24px rgba(22, 54, 95, .14));
+}
+.prio-box { padding: 16px; }
 .prio-head { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 4px 8px; }
 .prio-head h3 { margin: 0; font-size: 15px; }
-.prio-table { width: 100%; border-collapse: collapse; }
-.prio-row { cursor: pointer; border-top: 1px solid var(--line); transition: background .06s; }
-.prio-table tr:first-child { border-top: none; }
-.prio-row:active { background: rgba(40, 77, 127, .06); }
-.prio-row > td { padding: 11px 4px; vertical-align: middle; }
-.prio-rank { width: 34px; text-align: center; }
+.prio-grid { display: grid; gap: 10px; }
+.prio-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(112px, auto);
+  gap: 10px;
+  align-items: center;
+  padding: 13px;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fff, var(--surface-soft));
+  box-shadow: 0 1px 2px rgba(22, 38, 74, .03), 0 8px 22px rgba(22, 38, 74, .06);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform .06s, border-color .16s, box-shadow .16s;
+  font: inherit;
+}
+.prio-card:active { transform: scale(.99); border-color: rgba(201, 162, 39, .48); }
+.prio-rank { width: 30px; text-align: center; }
 .rank-no {
   display: inline-grid; place-items: center; width: 24px; height: 24px;
   border-radius: 50%; background: var(--rc, #cbd5e1); color: #fff;
   font-size: 12px; font-weight: 800;
 }
-.prio-main { width: 100%; }
-.prio-title { font-size: 14.5px; font-weight: 700; line-height: 1.35; }
-.prio-main .subj-tags { margin-top: 5px; }
-.prio-stat { width: 96px; text-align: right; }
-.prio-stat .mini-track { width: 88px; margin-left: auto; }
+.prio-main { min-width: 0; display: grid; gap: 5px; }
+.prio-title { display: block; font-size: 14.5px; font-weight: 800; line-height: 1.35; }
+.prio-main .subj-tags { margin-top: 0; }
+.prio-faces { display: flex; align-items: center; min-height: 24px; }
+.prio-faces img {
+  width: 24px; height: 24px; border-radius: 50%;
+  object-fit: cover; object-position: center top;
+  border: 1.5px solid #fff; background: #fff;
+  box-shadow: 0 0 0 1px var(--line), 0 4px 10px rgba(22, 38, 74, .08);
+}
+.prio-faces img + img { margin-left: -6px; }
+.prio-stat { display: grid; gap: 6px; justify-items: end; text-align: right; }
+.prio-coverage { font-size: 11px; font-weight: 800; color: var(--brand-d); white-space: nowrap; }
+.prio-stat .mini-track { width: 104px; margin-left: auto; }
 .prio-meta { display: flex; align-items: center; justify-content: flex-end; gap: 6px; margin-top: 6px; }
 .prio-badge { font-size: 10.5px; font-weight: 800; border-radius: 6px; padding: 2px 6px; white-space: nowrap; }
 .prio-badge.new { background: #f1f5f9; color: #94a3b8; }
 .prio-badge.due { background: #fef3c7; color: #b45309; }
 .prio-badge.ok  { background: #dcfce7; color: #15803d; }
 .prio-empty { padding: 18px 4px; text-align: center; }
+@media (max-width: 420px) {
+  .prio-card { grid-template-columns: 28px minmax(0, 1fr); }
+  .prio-stat { grid-column: 2; justify-items: stretch; text-align: left; }
+  .prio-stat .mini-track { width: 100%; margin-left: 0; }
+  .prio-meta { justify-content: flex-start; }
+}
+[data-theme="dark"] .home-palace {
+  background: linear-gradient(160deg, #17243a, #10213a);
+  border-color: #314768;
+}
+[data-theme="dark"] .home-palace-kicker { color: #f2d976; }
+[data-theme="dark"] .prio-card {
+  background: linear-gradient(180deg, #17243a, #101a2e);
+  box-shadow: 0 1px 2px rgba(0,0,0,.32), 0 10px 28px rgba(0,0,0,.24);
+}
 [data-theme="dark"] .prio-badge.new { background: var(--surface); color: var(--muted); }
 [data-theme="dark"] .prio-badge.due { background: #3b2f12; color: #fbbf24; }
 [data-theme="dark"] .prio-badge.ok  { background: #14321f; color: #4ade80; }
@@ -605,7 +681,9 @@ table.cmp th:first-child { text-align: left; }
   object-fit: cover; object-position: center top; border: 1.5px solid #cbd5e1; background: #fff;
 }
 .char-law { display: block; font-size: 10px; font-weight: 800; color: #344762; margin-top: 2px; white-space: normal; }
-.char-name { display: block; font-size: 9px; color: var(--muted); line-height: 1.25; white-space: normal; }
+.char-name { display: block; font-size: 9px; color: var(--ink); line-height: 1.25; white-space: normal; font-weight: 800; }
+.char-title { display: block; font-size: 8.5px; color: var(--muted); line-height: 1.25; white-space: normal; }
+[data-theme="dark"] .char-law { color: #cbd5e1; }
 
 /* ---- 別ページ: 全員のキャラ紹介 ---- */
 .char-intro-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -613,6 +691,7 @@ table.cmp th:first-child { text-align: left; }
 .ci-card img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: center top; border: 2px solid #cbd5e1; background: #fff; flex: none; }
 .ci-body { min-width: 0; }
 .ci-name { font-weight: 800; font-size: 14px; color: var(--ink); }
+.ci-name span { display: block; font-size: 12px; color: var(--gold); line-height: 1.35; }
 .ci-law { font-size: 12px; color: var(--muted); }
 .ci-sub-head { margin: 18px 0 8px; font-size: 13px; font-weight: 800; color: var(--muted); }
 @media (max-width: 480px) { .char-intro-grid { grid-template-columns: 1fr; } }
