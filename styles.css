@@ -402,14 +402,14 @@ table.cmp td.ans, table.cmp td.wordcloze {
 .ox-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 .ox-btn {
   border-radius: 14px; padding: 22px 4px; cursor: pointer;
-  background: color-mix(in srgb, var(--c) 14%, #fff);
-  color: var(--c); font-weight: 800; font-size: 20px;
-  border: 1.5px solid color-mix(in srgb, var(--c) 38%, #fff);
+  background: var(--c);
+  color: #fff; font-weight: 800; font-size: 20px;
+  border: 1.5px solid var(--c);
 }
 .ox-btn:active { transform: scale(.96); }
 [data-theme="dark"] .ox-btn {
-  background: color-mix(in srgb, var(--c) 24%, #1e293b);
-  border-color: color-mix(in srgb, var(--c) 45%, #1e293b);
+  background: var(--c);
+  border-color: var(--c);
   color: #fff;
 }
 
@@ -572,23 +572,20 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 1
 .answer-flash {
   position: fixed; inset: 0; z-index: 60;
   display: grid; place-items: center;
-  font-size: min(85vw, 520px); font-weight: 900; line-height: 1;
+  font-size: min(78vw, 480px); font-weight: 900; line-height: 1;
+  color: #fff;
+  -webkit-text-stroke: 8px #fff;
+  text-shadow: 0 8px 30px rgba(0,0,0,.4);
   pointer-events: none;
-  animation: flashpop .9s ease-out forwards;
+  animation: flashpop .8s ease-out forwards;
 }
-/* 正解=緑、不正解=赤。正解でも赤が光るバグの修正 */
-.answer-flash.ok {
-  color: #16a34a;
-  text-shadow: 0 8px 30px rgba(22,163,74,.25);
-}
-.answer-flash.ng {
-  color: #ef4444;
-  text-shadow: 0 8px 30px rgba(239,68,68,.25);
-}
+.answer-flash.ok { background: rgba(220,38,38,.94); }   /* 正解も赤 全面 */
+.answer-flash.ng { background: rgba(220,38,38,.94); }   /* 不正解=赤 全面 */
 @keyframes flashpop {
-  0%   { opacity: 0; transform: scale(.5); }
-  20%  { opacity: .95; transform: scale(1.08); }
-  55%  { opacity: .92; transform: scale(1); }
+  0%   { opacity: 0; transform: scale(.6); }
+  15%  { opacity: 1; transform: scale(1.18); }
+  30%  { transform: scale(.98); }
+  45%  { transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1); }
 }
 

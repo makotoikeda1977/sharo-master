@@ -553,8 +553,8 @@
           ? `<button class="btn-primary big" id="next">次へ</button>`
           : ox
             ? `<div class="ox-buttons">
-                 <button class="ox-btn" data-ox="○" style="--c:#22c55e">○ 正しい</button>
-                 <button class="ox-btn" data-ox="×" style="--c:#ef4444">× 誤り</button>
+                 <button class="ox-btn" data-ox="○" style="--c:#dc2626">○ 正しい</button>
+                 <button class="ox-btn" data-ox="×" style="--c:#2563eb">× 誤り</button>
                </div>`
             : session.revealed
               ? Object.entries(window.SRS.GRADES).map(([id, g]) =>
