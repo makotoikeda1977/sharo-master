@@ -138,21 +138,8 @@
     const s = computeStats(now);
     const view = $('#view');
 
-    // 各テーマの定着率を算出。定着の低い(=身についていない)ものを上に
-    let rows = topics().map((t) => {
-      const cards = withState(t.cards.map((card, idx) => ({ topic: t, idx, card })), now);
-      const total = cards.length;
-      const studiedCards = cards.filter((c) => c.state.last);
-      const studied = studiedCards.length;
-      const due = cards.filter((c) => window.SRS.isDue(c.state, now)).length;
-      const avgRet = studied
-        ? studiedCards.reduce((a, c) => a + window.SRS.retention(c.state, now), 0) / studied
-        : 0;
-      const coverage = total ? studied / total : 0;
-      return { t, total, studied, due, avgRet, coverage };
-    }).sort((a, b) => a.avgRet - b.avgRet || b.due - a.due || b.total - a.total);
-
-    // 科目フィルタ
+    // SRS廃止: テーマ一覧をそのまま表示(定着度・復習スケジュールなし)
+    let rows = topics().map((t) => ({ t }));
     if (homeSubj) rows = rows.filter((r) => r.t.subjects.includes(homeSubj));
 
     // 出現する科目を SUBJECTS の順で
@@ -160,28 +147,15 @@
     topics().forEach((t) => t.subjects.forEach((sj) => present.add(sj)));
     const subjList = Object.keys(SUBJECTS).filter((sj) => present.has(sj));
 
-    const retColor = (avgRet) =>
-      avgRet >= 0.7 ? '#22c55e' : avgRet >= 0.4 ? '#f59e0b' : '#ef4444';
-
-    const rowHTML = rows.map((r, i) => {
-      const ret = Math.round(r.avgRet * 100);
-      let badge;
-      if (r.studied === 0) badge = '<span class="prio-badge new">未学習</span>';
-      else if (r.due > 0) badge = `<span class="prio-badge due">復習 ${r.due}</span>`;
-      else badge = `<span class="prio-badge ok">定着 ${ret}%</span>`;
-      return `
+    const rowHTML = rows.map((r, i) => `
         <tr class="prio-row" data-topic="${r.t.id}">
-          <td class="prio-rank"><span class="rank-no" style="--rc:${retColor(r.avgRet)}">${i + 1}</span></td>
+          <td class="prio-rank"><span class="rank-no">${i + 1}</span></td>
           <td class="prio-main">
             <div class="prio-title">${r.t.title}</div>
             <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
           </td>
-          <td class="prio-stat">
-            <div class="mini-track"><div class="mini-fill" style="width:${Math.round(r.coverage * 100)}%"></div></div>
-            <div class="prio-meta">${badge}<span class="small muted">${r.studied}/${r.total}</span></div>
-          </td>
-        </tr>`;
-    }).join('');
+          <td class="prio-stat"><span class="pill">${r.t.cards.length}枚</span></td>
+        </tr>`).join('');
 
     view.innerHTML = `
       <div class="subj-filter">
@@ -192,7 +166,7 @@
       <div class="card-box prio-box">
         <div class="prio-head">
           <h3>横断テーマ</h3>
-          <span class="small muted">定着の低い順</span>
+          <span class="small muted">タップして練習</span>
         </div>
         <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
@@ -349,20 +323,10 @@
   }
 
   function topicCardHTML(t, now) {
-    const cards = withState(t.cards.map((card, idx) => ({ topic: t, idx, card })), now);
-    const studied = cards.filter((c) => c.state.last).length;
-    const ret = studied
-      ? Math.round(cards.filter((c) => c.state.last)
-          .reduce((a, c) => a + window.SRS.retention(c.state, now), 0) / studied * 100)
-      : 0;
     return `
       <div class="topic-card" data-topic="${t.id}">
         <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}枚</span></div>
         <div class="subj-tags">${t.subjects.map(subjTag).join('')}</div>
-        <div class="topic-prog">
-          <div class="mini-track"><div class="mini-fill" style="width:${cards.length ? studied / cards.length * 100 : 0}%"></div></div>
-          <span class="small muted">${studied}/${cards.length} 学習 ・ 定着${ret}%</span>
-        </div>
       </div>`;
   }
 
@@ -457,11 +421,8 @@
         .slice(0, 30);
     }
 
-    const due = cards.filter((c) => c.state.last && window.SRS.isDue(c.state, now));
-    const fresh = shuffle(cards.filter((c) => !c.state.last));
-    // 期限切れがひどい順 → 新規(順番はランダム) の順に。1セッション最大20枚
-    due.sort((a, b) => a.state.due - b.state.due);
-    return [...due, ...fresh].slice(0, 20);
+    // SRS廃止: 全カードを元の順番でそのまま練習(復習スケジュール・上限なし)
+    return cards;
   }
 
   function renderReview(now, params) {
@@ -627,7 +588,6 @@
           <span class="subj-line">${item.topic.subjects.map(subjTag).join('')}</span>
           <span class="topic-name">${item.topic.title}</span>
           ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
-          ${ret !== null ? `<span class="ret-badge">記憶 ${ret}%</span>` : '<span class="ret-badge new">NEW</span>'}
         </div>
         <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q.replace(/^【[^】]*】\s*/, '')}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
@@ -703,20 +663,11 @@
   function answerOX(choice) {
     if (session.answered) return;
     document.onkeydown = null;
-    const now = Date.now();
     const item = session.queue[session.pos];
     const correct = (choice === oxAnswer(item.card));
-    if (!session.graded) {  // SRS採点・記録は初回のみ(「もう一度」は練習なので再採点しない)
-      const gradeId = correct ? 'good' : 'again';
-      const newState = window.SRS.review(item.state, gradeId, now);
-      window.Store.setCardState(item.topic.id, item.idx, newState);
-      window.Store.logReview({
-        t: now, topic: item.topic.id, idx: item.idx,
-        grade: gradeId, stability: newState.stability,
-        retention: item.state.last ? window.SRS.retention(item.state, now) : 0,
-      });
+    if (!session.graded) {  // 練習カウントのみ(SRS採点・復習スケジュールは廃止)
       session.done++;
-      if (!correct) { session.again++; session.queue.push({ ...item, state: newState }); }
+      if (!correct) session.again++;
       session.graded = true;
     }
     session.answered = { choice, correct };
@@ -773,11 +724,6 @@
       <section class="hero compact"><h2>成長と忘却の可視化</h2>
         <p class="muted">学習の積み上げと、これからの忘れ方</p></section>
 
-      <div class="stat-grid tight">
-        <div class="stat"><div class="stat-num">${s.studied}</div><div class="stat-lbl">学習済</div></div>
-        <div class="stat"><div class="stat-num">${s.mature}</div><div class="stat-lbl">定着(長期)</div></div>
-        <div class="stat"><div class="stat-num">${Math.round(s.avgRet * 100)}<small>%</small></div><div class="stat-lbl">平均保持率</div></div>
-      </div>
 
       <div class="card-box">
         <h3>学習量の推移</h3>
