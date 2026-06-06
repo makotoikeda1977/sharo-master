@@ -187,9 +187,6 @@
           <span class="prio-rank"><span class="rank-no" style="--rc:${retColor(r.avgRet)}">${i + 1}</span></span>
           <span class="prio-main">
             <span class="prio-title">${r.t.title}</span>
-            <span class="prio-faces" aria-hidden="true">
-              ${r.t.subjects.map((sj) => `<img src="./icons/chars/${sj}.png" alt="" onerror="this.style.display='none'">`).join('')}
-            </span>
             <span class="subj-tags">${r.t.subjects.map(subjTag).join('')}</span>
           </span>
           <span class="prio-stat">
