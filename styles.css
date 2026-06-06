@@ -561,13 +561,18 @@ code { background: var(--bg); padding: 1px 5px; border-radius: 5px; font-size: 1
   position: fixed; inset: 0; z-index: 60;
   display: grid; place-items: center;
   font-size: min(85vw, 520px); font-weight: 900; line-height: 1;
-  color: #ef4444;
   pointer-events: none;
-  text-shadow: 0 8px 30px rgba(15,23,42,.25);
   animation: flashpop .9s ease-out forwards;
 }
-.answer-flash.ok { color: #ef4444; }
-.answer-flash.ng { color: #ef4444; }
+/* 正解=緑、不正解=赤。正解でも赤が光るバグの修正 */
+.answer-flash.ok {
+  color: #16a34a;
+  text-shadow: 0 8px 30px rgba(22,163,74,.25);
+}
+.answer-flash.ng {
+  color: #ef4444;
+  text-shadow: 0 8px 30px rgba(239,68,68,.25);
+}
 @keyframes flashpop {
   0%   { opacity: 0; transform: scale(.5); }
   20%  { opacity: .95; transform: scale(1.08); }
