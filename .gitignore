@@ -7,3 +7,8 @@ __pycache__/
 
 # ローカル引き継ぎメモ（デプロイ対象外）
 HANDOFF.md
+GEMINI.md
+
+# パイロット作業ファイル（本番不要）
+_pilot_*.json
+_pilot_*.py
