@@ -288,7 +288,7 @@
         </div>` : ''}
         ${topic.voices && topic.voices.length ? `
         <div class="voices">
-          <div class="vc-head">🗣️ 制度のホンネ(差分)</div>
+          <div class="vc-head">🗣️ 制度のホンネ(ここがポイント)</div>
           ${topic.voices.map((v) => {
             const c = (v.subj && SUBJECTS[v.subj]) ? SUBJECTS[v.subj].color : '#64748b';
             const cid = v.char || (v.subj && SUBJECTS[v.subj] ? v.subj : null);
