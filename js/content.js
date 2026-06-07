@@ -103,9 +103,9 @@ const CROSS_TOPICS = [
   },
   {
     id: 'seiritsu-shometsu',
-    title: '成立=当日／消滅=翌日',
-    tagline: '保険関係・資格の「いつ成立・いつ消滅」を横断。事業の廃止＝当然消滅に注意。',
-    subjects: ['rosai', 'koyo', 'choshu', 'kenpo'],
+    title: '成立=当日／消滅=翌日（労働保険）',
+    tagline: '労働保険（徴収・労災・雇用）の保険関係・資格は「いつ成立・いつ消滅」。事業の廃止＝当然消滅に注意。',
+    subjects: ['choshu', 'rosai', 'koyo'],
     voices: [
       { subj: 'rosai', name: '災堂咲', line: '任意加入は「認可があった日（当日）」に成立、消滅は「翌日」。事業の廃止は翌日に当然消滅よ。' },
       { subj: 'koyo', name: '職田めぐみ', line: '成立は当日・消滅は翌日が基本。当然適用→暫定任意に該当したら翌日にみなし認可で「存続」、改めての申請はいらないの。' },
