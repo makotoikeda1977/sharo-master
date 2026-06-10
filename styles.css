@@ -326,6 +326,17 @@ table.cmp td.ans, table.cmp td.wordcloze {
 }
 .row-x { color: #ef4444; font-weight: 800; margin-right: 5px; }
 
+/* ---- スマホでは比較表を画面幅に収める(横スクロールを出さない) ---- */
+@media (max-width: 600px) {
+  table.cmp { font-size: 12px; }
+  table.cmp.wide { width: 100%; min-width: 0; table-layout: fixed; }
+  table.cmp.wide td, table.cmp.wide th { min-width: 0; }
+  table.cmp.wide td.rowhdr { min-width: 0; }
+  table.cmp th, table.cmp td { padding: 6px 5px; }
+  .sheet table.cmp td.ans .mask { width: 3em; }
+  .table-wrap::after { display: none; }
+}
+
 /* ---- 表テスト ---- */
 .tt-prompt-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
 .tt-answers {
