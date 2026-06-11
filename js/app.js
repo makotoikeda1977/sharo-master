@@ -138,14 +138,18 @@
     const s = computeStats(now);
     const view = $('#view');
 
-    // SRS廃止: テーマ一覧をそのまま表示(定着度・復習スケジュールなし)
-    let rows = topics().map((t) => ({ t }));
-    if (homeSubj) rows = rows.filter((r) => r.t.subjects.includes(homeSubj));
+    // タブ: 横断(複数科目)=homeSubj null ／ 単科目=その科目のみ(横断は重複させない)
+    let rows;
+    if (homeSubj) {
+      rows = topics().filter((t) => t.subjects.length === 1 && t.subjects[0] === homeSubj).map((t) => ({ t }));
+    } else {
+      rows = topics().filter((t) => t.subjects.length >= 2).map((t) => ({ t }));
+    }
 
-    // 出現する科目を SUBJECTS の順で
-    const present = new Set();
-    topics().forEach((t) => t.subjects.forEach((sj) => present.add(sj)));
-    const subjList = Object.keys(SUBJECTS).filter((sj) => present.has(sj));
+    // 単科目テーマを持つ科目だけをタブに出す(SUBJECTS の順)
+    const singlePresent = new Set();
+    topics().forEach((t) => { if (t.subjects.length === 1) singlePresent.add(t.subjects[0]); });
+    const subjList = Object.keys(SUBJECTS).filter((sj) => singlePresent.has(sj));
 
     const rowHTML = rows.map((r, i) => `
         <tr class="prio-row" data-topic="${r.t.id}">
@@ -159,13 +163,13 @@
 
     view.innerHTML = `
       <div class="subj-filter">
-        <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">すべて</button>
+        <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">横断</button>
         ${subjList.map((sj) =>
           `<button class="sfchip${homeSubj === sj ? ' on' : ''}" data-subj="${sj}" style="--c:${SUBJECTS[sj].color}">${SUBJECTS[sj].short}</button>`).join('')}
       </div>
       <div class="card-box prio-box">
         <div class="prio-head">
-          <h3>横断テーマ</h3>
+          <h3>${homeSubj ? SUBJECTS[homeSubj].name : '横断テーマ'}</h3>
           <span class="small muted">タップして練習</span>
         </div>
         <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
