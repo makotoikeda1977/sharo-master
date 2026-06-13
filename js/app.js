@@ -123,6 +123,7 @@
 
   // ============================ ホーム ======================================
   let homeSubj = null;        // ホームの科目フィルタ(null=すべて)
+  let homeQuery = '';         // テーマ検索(タイトル・要約・問題文を横断検索)
   let scrollToTopic = null;   // テーマ一覧に戻ったとき、その位置までスクロール
   let lastOrigin = 'cross';   // テーマ詳細を開いた元の一覧(home / cross)
 
@@ -139,8 +140,15 @@
     const view = $('#view');
 
     // タブ: 横断(複数科目)=homeSubj null ／ 単科目=その科目のみ(横断は重複させない)
+    // 検索中はタブを越えて全テーマから探す(タイトル・要約・問題文)
     let rows;
-    if (homeSubj) {
+    if (homeQuery) {
+      const q = homeQuery;
+      rows = topics().filter((t) =>
+        t.title.includes(q) || (t.tagline || '').includes(q) ||
+        t.cards.some((c) => c.q.includes(q) || (c.p || '').includes(q))
+      ).map((t) => ({ t }));
+    } else if (homeSubj) {
       rows = topics().filter((t) => t.subjects.length === 1 && t.subjects[0] === homeSubj).map((t) => ({ t }));
     } else {
       rows = topics().filter((t) => t.subjects.length >= 2).map((t) => ({ t }));
@@ -162,15 +170,16 @@
         </tr>`).join('');
 
     view.innerHTML = `
-      <div class="subj-filter">
-        <button class="sfchip${homeSubj === null ? ' on' : ''}" data-subj="">横断</button>
+      <input type="search" id="theme-search" class="theme-search" placeholder="🔍 テーマ・キーワードを検索（例: 時効、4分の3）" value="${homeQuery.replace(/"/g, '&quot;')}" autocomplete="off">
+      <div class="subj-filter${homeQuery ? ' dim' : ''}">
+        <button class="sfchip${homeSubj === null && !homeQuery ? ' on' : ''}" data-subj="">横断</button>
         ${subjList.map((sj) =>
-          `<button class="sfchip${homeSubj === sj ? ' on' : ''}" data-subj="${sj}" style="--c:${SUBJECTS[sj].color}">${SUBJECTS[sj].short}</button>`).join('')}
+          `<button class="sfchip${homeSubj === sj && !homeQuery ? ' on' : ''}" data-subj="${sj}" style="--c:${SUBJECTS[sj].color}">${SUBJECTS[sj].short}</button>`).join('')}
       </div>
       <div class="card-box prio-box">
         <div class="prio-head">
-          <h3>${homeSubj ? SUBJECTS[homeSubj].name : '横断テーマ'}</h3>
-          <span class="small muted">タップして練習</span>
+          <h3>${homeQuery ? `「${homeQuery}」の検索結果` : (homeSubj ? SUBJECTS[homeSubj].name : '横断テーマ')}</h3>
+          <span class="small muted">${homeQuery ? rows.length + '件' : 'タップして練習'}</span>
         </div>
         <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
@@ -179,10 +188,21 @@
       </button>` : ''}
       ${s.importedTotal > 0 ? `<button class="btn-ghost big imp-btn" id="start-imported">
         📖 過去問だけ復習(${s.imported}枚)
-      </button>` : ''}`;
+      </button>` : ''}
+      <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>`;
 
+    const searchInp = $('#theme-search');
+    searchInp.addEventListener('input', () => {
+      homeQuery = searchInp.value.trim();
+      renderHome(Date.now());
+      // 再描画で失うフォーカスとカーソル位置を復元
+      requestAnimationFrame(() => {
+        const i = $('#theme-search');
+        if (i) { i.focus(); const len = i.value.length; i.setSelectionRange(len, len); }
+      });
+    });
     $$('.sfchip', view).forEach((b) =>
-      b.addEventListener('click', () => { homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
+      b.addEventListener('click', () => { homeQuery = ''; homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
       el.addEventListener('click', () => { lastOrigin = 'home'; go('cross', { topic: el.dataset.topic }); }));
     restoreListScroll(view);

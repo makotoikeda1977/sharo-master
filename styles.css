@@ -176,6 +176,22 @@ body {
   border-radius: 6px; padding: 2px 7px;
 }
 
+/* ---- テーマ検索 ---- */
+.theme-search {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 11px 14px; font-size: 14px; color: var(--ink);
+  margin-bottom: 10px; box-shadow: var(--shadow);
+}
+.theme-search:focus { outline: 2px solid var(--brand); outline-offset: -1px; }
+.subj-filter.dim { opacity: .45; }
+
+/* ---- 法令基準の表記 ---- */
+.law-basis {
+  text-align: center; font-size: 11px; color: var(--muted);
+  margin: 18px 0 4px; letter-spacing: .02em;
+}
+
 /* ---- 横断テーマ一覧 ---- */
 .topic-list { display: grid; gap: 12px; }
 .palace-btn { margin-bottom: 16px; color: var(--brand-d); }
