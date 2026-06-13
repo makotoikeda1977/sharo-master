@@ -450,9 +450,7 @@
 
   // カードの問題文・解説の法令名から、その1問の科目を判定(横断テーマ用)
   function detectCardSubject(card, topic) {
-    const text = (card.q || '') + ' ' + (card.a || '');
     const rules = [
-      ['kijun',   /労働基準法/],
       ['anei',    /労働安全衛生法/],
       ['rosai',   /労働者災害補償保険法|労災保険法/],
       ['koyo',    /雇用保険法/],
@@ -460,7 +458,15 @@
       ['konen',   /厚生年金保険法/],
       ['kokunen', /国民年金法/],
       ['choshu',  /労働保険の保険料の徴収|労働保険徴収法|徴収法|労働保険の保険関係/],
+      ['kijun',   /労働基準法/],
     ];
+    // ① q冒頭の【法令名】を最優先で判定(本文中の他法令への言及で誤判定しないように)
+    const head = (card.q || '').match(/^【([^】]*)】/);
+    if (head) {
+      for (const [id, re] of rules) if (re.test(head[1])) return id;
+    }
+    // ② フォールバック: 全文スキャン
+    const text = (card.q || '') + ' ' + (card.a || '');
     for (const [id, re] of rules) if (re.test(text)) return id;
     return (topic.subjects && topic.subjects[0]) || null;
   }
