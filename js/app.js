@@ -433,8 +433,8 @@
         .slice(0, 30);
     }
 
-    // SRS廃止: 全カードを元の順番でそのまま練習(復習スケジュール・上限なし)
-    return cards;
+    // 全カードを毎回ランダムな順で出題(復習スケジュール・上限なし)
+    return shuffle(cards);
   }
 
   function renderReview(now, params) {
