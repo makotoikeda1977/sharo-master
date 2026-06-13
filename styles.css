@@ -307,18 +307,14 @@ table.cmp tbody tr td.ans.colc { background: color-mix(in srgb, var(--colc) 12%,
 table.cmp td.ans .mask {
   border-radius: 4px; padding: 0 2px; transition: background .12s, color .12s;
 }
-/* シートON時: 答えを赤ブロックで隠す。長さは一律(答えを推測させない)。タップで表示 */
+/* シートON時: 答えを赤ブロックで隠す。幅は答えの長さのまま(固定しない)。タップで表示 */
 .sheet table.cmp td.ans .mask {
-  display: inline-block;
-  width: 4.5em; max-width: 100%;
+  display: inline;
   background: #e11d48; color: transparent; cursor: pointer;
-  white-space: nowrap; overflow: hidden; vertical-align: middle;
   -webkit-user-select: none; user-select: none;
 }
 .sheet table.cmp td.ans .mask.revealed {
-  display: inline; width: auto;
   background: transparent; color: inherit;
-  white-space: normal; overflow: visible;
 }
 /* 語句単位の赤シート(太字だけ隠す。Anki方式) */
 table.cmp td.wordcloze { white-space: normal; }
@@ -349,7 +345,6 @@ table.cmp td.ans, table.cmp td.wordcloze {
   table.cmp.wide td, table.cmp.wide th { min-width: 0; }
   table.cmp.wide td.rowhdr { min-width: 0; }
   table.cmp th, table.cmp td { padding: 6px 5px; }
-  .sheet table.cmp td.ans .mask { width: 3em; }
   .table-wrap::after { display: none; }
 }
 
