@@ -10,16 +10,6 @@
   <link rel="apple-touch-icon" href="./icons/icon.svg" />
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
   <link rel="stylesheet" href="./styles.css" />
-  <script>
-    // 描画前にテーマを適用してチラつきを防ぐ
-    (function () {
-      var t = localStorage.getItem('sharo.theme');
-      if (t !== 'light' && t !== 'dark') {
-        t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      }
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
 </head>
 <body>
   <header class="app-header">
@@ -29,7 +19,6 @@
         <h1>横断宮殿</h1>
         <p class="tagline-sm">社労士 × 横断学習</p>
       </div>
-      <button id="theme-toggle" class="icon-btn" aria-label="テーマ切替" title="ライト/ダーク切替">🌙</button>
     </div>
   </header>
 

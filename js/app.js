@@ -80,18 +80,6 @@
     return streak;
   }
 
-  // ============================ テーマ(ダーク/ライト) =====================
-  function currentTheme() {
-    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
-  }
-  function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    try { localStorage.setItem('sharo.theme', t); } catch (e) {}
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', t === 'dark' ? '#0f172a' : '#3b82f6');
-    const btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
-  }
 
   // ============================ 復習リマインダー ============================
   const Notify = {
@@ -258,10 +246,10 @@
       <div class="card-box">
         ${topic.table ? `
         <div class="sheet-bar">
-          <button class="chip2" id="sheet-toggle">🟥 赤シート ON</button>
-          <span class="sheet-hint small muted">タップで答え表示</span>
+          <button class="chip2" id="sheet-toggle">⬜️ 赤シート OFF</button>
+          <span class="sheet-hint small muted" style="visibility:hidden">タップで答え表示</span>
         </div>
-        <div class="table-wrap sheet" id="cmp-wrap">
+        <div class="table-wrap" id="cmp-wrap">
           <table class="cmp${multiCol ? ' wide' : ''}">
             <thead><tr>${topic.table.headers.map((h, i) => {
                 const cid = lawCharId(h);
@@ -333,7 +321,7 @@
     if (topic.table) {
       const wrap = $('#cmp-wrap');
       const masks = $$('.mask, .cloze', wrap);
-      let sheetOn = true;
+      let sheetOn = false;  // 最初は赤シートOFF(答えが見えている状態)
       const applySheet = () => {
         wrap.classList.toggle('sheet', sheetOn);
         $('#sheet-toggle').textContent = sheetOn ? '🟥 赤シート ON' : '⬜️ 赤シート OFF';
@@ -1040,12 +1028,6 @@
   }
 
   function init() {
-    // テーマ切替(初期アイコン反映 + クリックで反転)
-    applyTheme(currentTheme());
-    const tt = document.getElementById('theme-toggle');
-    if (tt) tt.addEventListener('click', () =>
-      applyTheme(currentTheme() === 'dark' ? 'light' : 'dark'));
-
     $$('.nav-item').forEach((n) =>
       n.addEventListener('click', () => go(n.dataset.route)));
     go('home');
