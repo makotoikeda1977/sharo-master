@@ -259,10 +259,12 @@
                 return `<th${cls}${style}>${face}${h}</th>`;
               }).join('')}</tr></thead>
             <tbody>${topic.table.rows.map((r, ri) => {
-                const lc = rowLawColor(r[0]) ||
+                const rowColors = topic.table.rowColors;
+                const lc = (rowColors && rowColors[ri]) || rowLawColor(r[0]) ||
                   (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]]
                     ? SUBJECTS[topic.subjects[0]].color : null);
                 const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
+                const useColC = multiCol && !rowColors;  // 行色を使うときは列の背景色を抑える(二重着色防止)
                 return `<tr${trA}>${r.map((c, i) => {
                   if (i === 0) {
                     if (!merge) return `<td class="rowhdr">${c}</td>`;
@@ -271,14 +273,15 @@
                     return `<td class="rowhdr">${c}</td>`;
                   }
                   if (!c) return '<td></td>';
+                  const sh = isShortCell(c) ? ' short' : '';
                   if (noMask.includes(i)) {
-                    const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
-                    return `<td class="ans nomask${multiCol ? ' colc' : ''}"${style}>${c}</td>`;
+                    const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
+                    return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}"${style}>${c}</td>`;
                   }
                   // セル内に **太字** があれば「語句単位の赤シート」、なければセル全体マスク
                   const hasCloze = c.indexOf('**') >= 0;
-                  const cls = 'ans' + (multiCol ? ' colc' : '') + (hasCloze ? ' wordcloze' : '');
-                  const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+                  const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh;
+                  const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
                   const inner = hasCloze
                     ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>')
                     : `<span class="mask">${c}</span>`;
@@ -360,6 +363,13 @@
     [/国民年金|国年/, SUBJECTS.kokunen.color],
     [/健康保険|健保/, SUBJECTS.kenpo.color],
   ];
+  // 短い答え(数字・割合・キーワード)は大きく太字で見せる
+  function isShortCell(c) {
+    if (!c) return false;
+    if (c.indexOf('<br>') >= 0) return false;
+    const t = String(c).replace(/\*\*/g, '').replace(/<[^>]+>/g, '').trim();
+    return t.length > 0 && t.length <= 8;
+  }
   function rowLawColor(text) {
     const t = String(text || '');
     for (const [re, c] of LAW_COLORS) if (re.test(t)) return c;
@@ -503,8 +513,10 @@
       return `<th${cls}${style}>${face}${h}</th>`;
     }).join('')}</tr></thead>`;
     const tbody = `<tbody>${t.rows.map((r, ri) => {
-      const lc = rowLawColor(r[0]) || (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]] ? SUBJECTS[topic.subjects[0]].color : null);
+      const rowColors = t.rowColors;
+      const lc = (rowColors && rowColors[ri]) || rowLawColor(r[0]) || (topic.subjects && topic.subjects.length === 1 && SUBJECTS[topic.subjects[0]] ? SUBJECTS[topic.subjects[0]].color : null);
       const trA = lc ? ` class="lawrow" style="--rowc:${lc}"` : '';
+      const useColC = multiCol && !rowColors;
       return `<tr${trA}>${r.map((c, i) => {
         if (i === 0) {
           if (!merge) return `<td class="rowhdr">${c}</td>`;
@@ -513,13 +525,14 @@
           return `<td class="rowhdr">${c}</td>`;
         }
         if (!c) return '<td></td>';
+        const sh = isShortCell(c) ? ' short' : '';
         if (noMask.includes(i)) {
-          const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
-          return `<td class="ans nomask${multiCol ? ' colc' : ''}"${style}>${c}</td>`;
+          const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
+          return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}"${style}>${c}</td>`;
         }
         const hasCloze = c.indexOf('**') >= 0;
-        const cls = 'ans' + (multiCol ? ' colc' : '') + (hasCloze ? ' wordcloze' : '');
-        const style = multiCol ? ` style="--colc:${colAccent(i)}"` : '';
+        const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh;
+        const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
         const inner = hasCloze ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>') : `<span class="mask">${c}</span>`;
         return `<td class="${cls}"${style}>${inner}</td>`;
       }).join('')}</tr>`;

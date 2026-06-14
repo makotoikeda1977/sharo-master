@@ -295,6 +295,9 @@ table.cmp tbody tr.lawrow td.rowhdr { box-shadow: inset 4px 0 0 var(--rowc); }
 /* ---- 答え列ごとの色分け(5年=青/2年=橙 等。行色より優先) ---- */
 table.cmp th.colh { color: var(--colc); border-bottom: 2px solid var(--colc); }
 table.cmp tbody tr td.ans.colc { background: color-mix(in srgb, var(--colc) 12%, var(--surface)); }
+/* 短い答え(数字・割合・キーワード)は大きく太字・中央寄せで主役に */
+table.cmp td.ans.short, table.cmp td.wordcloze.short { text-align: center; font-size: 1.18em; font-weight: 800; }
+table.cmp td.ans.short .mask, table.cmp td.wordcloze.short .cloze { font-weight: 800; }
 
 /* ---- 赤シート(答えを隠す) ---- */
 .sheet-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
