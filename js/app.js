@@ -224,6 +224,7 @@
     // 答え列が2つ以上ある表は、列ごとに色を分けて区別しやすくする
     const multiCol = !!(topic.table && topic.table.headers && topic.table.headers.length >= 3);
     const noMask = (topic.table && Array.isArray(topic.table.noMaskCols)) ? topic.table.noMaskCols : [];
+    const emCols = (topic.table && Array.isArray(topic.table.emCols)) ? topic.table.emCols : [];
     const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
     const merge = !!(topic.table && topic.table.mergeFirstCol);
     const span = [];
@@ -274,13 +275,14 @@
                   }
                   if (!c) return '<td></td>';
                   const sh = isShortCell(c) ? ' short' : '';
+                  const em = emCols.includes(i) ? ' em' : '';
                   if (noMask.includes(i)) {
                     const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
-                    return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}"${style}>${c}</td>`;
+                    return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${c}</td>`;
                   }
                   // セル内に **太字** があれば「語句単位の赤シート」、なければセル全体マスク
                   const hasCloze = c.indexOf('**') >= 0;
-                  const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh;
+                  const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh + em;
                   const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
                   const inner = hasCloze
                     ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>')
@@ -492,6 +494,7 @@
     const t = topic.table;
     const multiCol = !!(t.headers && t.headers.length >= 3);
     const noMask = Array.isArray(t.noMaskCols) ? t.noMaskCols : [];
+    const emCols = Array.isArray(t.emCols) ? t.emCols : [];
     const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
     const merge = !!t.mergeFirstCol;
     const span = [];
@@ -526,12 +529,13 @@
         }
         if (!c) return '<td></td>';
         const sh = isShortCell(c) ? ' short' : '';
+        const em = emCols.includes(i) ? ' em' : '';
         if (noMask.includes(i)) {
           const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
-          return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}"${style}>${c}</td>`;
+          return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${c}</td>`;
         }
         const hasCloze = c.indexOf('**') >= 0;
-        const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh;
+        const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh + em;
         const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
         const inner = hasCloze ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>') : `<span class="mask">${c}</span>`;
         return `<td class="${cls}"${style}>${inner}</td>`;

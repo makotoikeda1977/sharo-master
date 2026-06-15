@@ -298,6 +298,9 @@ table.cmp tbody tr td.ans.colc { background: color-mix(in srgb, var(--colc) 12%,
 /* 短い答え(数字・割合・キーワード)は大きく太字・中央寄せで主役に */
 table.cmp td.ans.short, table.cmp td.wordcloze.short { text-align: center; font-size: 1.18em; font-weight: 800; }
 table.cmp td.ans.short .mask, table.cmp td.wordcloze.short .cloze { font-weight: 800; }
+/* emCols: 指定列を全部太字＋センタリング（セルの長短に関わらず） */
+table.cmp td.ans.em { text-align: center; font-weight: 800; }
+table.cmp td.ans.em .mask, table.cmp td.ans.em .cloze { font-weight: 800; }
 
 /* ---- 赤シート(答えを隠す) ---- */
 .sheet-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
