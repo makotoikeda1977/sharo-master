@@ -382,9 +382,9 @@ table.cmp td.ans, table.cmp td.wordcloze {
 
 .recall {
   background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
-  padding: 22px 18px; min-height: 240px; display: flex; flex-direction: column;
+  padding: 16px 18px; display: flex; flex-direction: column;
 }
-.recall-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.recall-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .recall-meta .subj-line { display: inline-flex; gap: 4px; }
 .topic-name { font-size: 12px; color: var(--muted); }
 .src-badge {
@@ -408,11 +408,14 @@ table.cmp td.ans, table.cmp td.wordcloze {
 }
 .hint.open { color: var(--muted); border: none; cursor: default; }
 .a {
-  margin-top: auto; padding-top: 18px; font-size: 20px; font-weight: 800; color: #0f172a;
-  opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s;
-  border-top: 1px solid var(--line);
+  margin-top: 0; max-height: 0; overflow: hidden; padding-top: 0; border-top: 0 solid var(--line);
+  font-size: 20px; font-weight: 800; color: #0f172a;
+  opacity: 0; transition: opacity .25s;
 }
-.a.show { opacity: 1; transform: none; }
+.a.show {
+  margin-top: 16px; max-height: none; overflow: visible; padding-top: 16px; border-top-width: 1px;
+  opacity: 1;
+}
 
 .rv-actions { margin-top: 16px; }
 .rv-actions .btn-primary.big { margin-bottom: 0; }
