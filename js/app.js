@@ -225,6 +225,7 @@
     const multiCol = !!(topic.table && topic.table.headers && topic.table.headers.length >= 3);
     const noMask = (topic.table && Array.isArray(topic.table.noMaskCols)) ? topic.table.noMaskCols : [];
     const emCols = (topic.table && Array.isArray(topic.table.emCols)) ? topic.table.emCols : [];
+    const shCols = shortColSet(topic.table);
     const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
     const merge = !!(topic.table && topic.table.mergeFirstCol);
     const span = [];
@@ -274,7 +275,7 @@
                     return `<td class="rowhdr">${c}</td>`;
                   }
                   if (!c) return '<td></td>';
-                  const sh = isShortCell(c) ? ' short' : '';
+                  const sh = shCols.has(i) ? ' short' : '';
                   const em = emCols.includes(i) ? ' em' : '';
                   if (noMask.includes(i)) {
                     const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
@@ -371,6 +372,24 @@
     if (c.indexOf('<br>') >= 0) return false;
     const t = String(c).replace(/\*\*/g, '').replace(/<[^>]+>/g, '').trim();
     return t.length > 0 && t.length <= 8;
+  }
+  // 列単位の強調可否: 答え列(i>=1)のうち、非空セルが「全て短い」列だけ.short対象にする。
+  // 同じ列に短い/長いが混在すると太字大文字と普通字の落差で見栄えが悪いため、混在列は強調しない。
+  function shortColSet(table) {
+    const cols = new Set();
+    if (!table || !table.headers) return cols;
+    const rows = table.rows || [];
+    for (let i = 1; i < table.headers.length; i++) {
+      let any = false, allShort = true;
+      for (const r of rows) {
+        const c = r[i];
+        if (c === undefined || c === null || String(c).trim() === '') continue;
+        any = true;
+        if (!isShortCell(c)) { allShort = false; break; }
+      }
+      if (any && allShort) cols.add(i);
+    }
+    return cols;
   }
   function rowLawColor(text) {
     const t = String(text || '');
@@ -495,6 +514,7 @@
     const multiCol = !!(t.headers && t.headers.length >= 3);
     const noMask = Array.isArray(t.noMaskCols) ? t.noMaskCols : [];
     const emCols = Array.isArray(t.emCols) ? t.emCols : [];
+    const shCols = shortColSet(t);
     const colAccent = (i) => COL_ACCENTS[(i - 1) % COL_ACCENTS.length];
     const merge = !!t.mergeFirstCol;
     const span = [];
@@ -528,7 +548,7 @@
           return `<td class="rowhdr">${c}</td>`;
         }
         if (!c) return '<td></td>';
-        const sh = isShortCell(c) ? ' short' : '';
+        const sh = shCols.has(i) ? ' short' : '';
         const em = emCols.includes(i) ? ' em' : '';
         if (noMask.includes(i)) {
           const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
