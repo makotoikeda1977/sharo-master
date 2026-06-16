@@ -1,5 +1,5 @@
 /* Service Worker — オフラインでも使えるよう静的アセットをキャッシュ */
-const CACHE = 'sharo-v269';
+const CACHE = 'sharo-v270';
 const ASSETS = [
   './',
   './index.html',
