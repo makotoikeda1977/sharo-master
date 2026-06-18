@@ -1056,8 +1056,8 @@
   }
 
   // 使い方・お問い合わせ・プライバシーポリシー(アプリストア提出に必要な情報を含む)
-  const SUPPORT_EMAIL = '';   // TODO: サポート用メールアドレスを設定
-  const OPERATOR_NAME = '（運営者名・連絡先を設定してください）';   // TODO: 運営者
+  const SUPPORT_EMAIL = 'info@houday.jp';
+  const OPERATOR_NAME = '池田誠';
   function renderInfo() {
     const view = $('#view');
     const contact = SUPPORT_EMAIL
