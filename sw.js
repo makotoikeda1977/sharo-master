@@ -1,11 +1,13 @@
 /* Service Worker — オフラインでも使えるよう静的アセットをキャッシュ */
-const CACHE = 'sharo-v339';
+const CACHE = 'sharo-v340';
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
   './manifest.webmanifest',
   './icons/icon.svg',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
   './js/content.js',
   './js/srs.js',
   './js/storage.js',
