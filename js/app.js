@@ -110,7 +110,7 @@
       window.Store.setSetting('lastNotified', today);
       try {
         new Notification('社労士 横断宮殿', {
-          body: `今日の復習が${dueCount}枚あります。`,
+          body: `今日の復習が${dueCount}問あります。`,
           icon: './icons/icon.svg',
         });
       } catch (e) {}
@@ -162,7 +162,7 @@
             <div class="prio-title">${r.t.title}</div>
             <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
           </td>
-          <td class="prio-stat"><span class="pill">${r.t.cards.length}枚</span></td>
+          <td class="prio-stat"><span class="pill">${r.t.cards.length}問</span></td>
         </tr>`).join('');
 
     view.innerHTML = `
@@ -180,10 +180,10 @@
         <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
       ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
-        🔁 間違えた問題だけ復習(${s.weak}枚)
+        🔁 間違えた問題だけ復習(${s.weak}問)
       </button>` : ''}
       ${s.importedTotal > 0 ? `<button class="btn-ghost big imp-btn" id="start-imported">
-        📖 過去問だけ復習(${s.imported}枚)
+        📖 過去問だけ復習(${s.imported}問)
       </button>` : ''}
       <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>`;
 
@@ -326,7 +326,7 @@
           }).join('')}
         </div>` : ''}
       </div>
-      <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}枚)</button>`;
+      <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}問)</button>`;
 
     $('#back').addEventListener('click', () => { scrollToTopic = topic.id; go(lastOrigin); });
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
@@ -351,7 +351,7 @@
   function topicCardHTML(t, now) {
     return `
       <div class="topic-card" data-topic="${t.id}">
-        <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}枚</span></div>
+        <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}問</span></div>
         <div class="subj-tags">${t.subjects.map(subjTag).join('')}</div>
       </div>`;
   }
@@ -612,7 +612,7 @@
           <h2>${empty ? '対象がありません' : (session.weak ? '苦手復習 完了!' : 'セッション完了!')}</h2>
           <p class="muted">${empty
             ? (session.weak ? 'いまは間違えた問題がありません。' : '復習できるカードがありません。')
-            : `${session.done}枚を復習 ・ うち「忘れた」${session.again}枚`}</p>
+            : `${session.done}問を復習 ・ うち「忘れた」${session.again}問`}</p>
           <div class="done-actions">
             ${session.topicId ? `<button class="btn-primary" id="next-topic">次のテーマへ →</button>` : ''}
             <button class="btn-ghost" id="to-home">ホームへ</button>
@@ -866,7 +866,7 @@
       const mode = (overlay.querySelector('input[name="im-mode"]:checked') || {}).value || 'append';
       mergeCustom(result.topics, mode);
       const cardTotal = result.topics.reduce((a, t) => a + t.cards.length, 0);
-      let info = `${result.topics.length}テーマ / ${cardTotal}枚を取り込みました。`;
+      let info = `${result.topics.length}テーマ / ${cardTotal}問を取り込みました。`;
       if (result.errors.length) info += `(スキップ ${result.errors.length}件)`;
       alert(info);
       close();
