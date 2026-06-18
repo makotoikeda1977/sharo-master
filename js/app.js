@@ -15,6 +15,14 @@
     return CROSS_TOPICS.concat(window.Store.getCustomTopics());
   }
 
+  // テーマ順で次のテーマのidを返す(末尾は先頭へ循環)
+  function nextTopicId(curId) {
+    const list = topics();
+    const i = list.findIndex((t) => t.id === curId);
+    if (i < 0) return null;
+    return list[(i + 1) % list.length].id;
+  }
+
   // ---- 全カードを平坦化したインデックス -----------------------------------
   function allCards() {
     const out = [];
@@ -607,6 +615,7 @@
             : `${session.done}枚を復習 ・ うち「忘れた」${session.again}枚`}</p>
           <div class="done-actions">
             ${empty ? '' : `<button class="btn-primary" id="more">続けて復習</button>`}
+            ${session.topicId ? `<button class="btn-primary" id="next-topic">次のテーマへ →</button>` : ''}
             <button class="btn-ghost" id="to-home">ホームへ</button>
             <button class="btn-ghost" id="to-memory">覚え方を見る</button>
           </div>
@@ -614,6 +623,11 @@
       const more = $('#more');
       if (more) more.addEventListener('click', () =>
         renderReview(Date.now(), { topic: session.topicId, weak: session.weak, imported: session.imported }));
+      const nextBtn = $('#next-topic');
+      if (nextBtn) nextBtn.addEventListener('click', () => {
+        const nid = nextTopicId(session.topicId);
+        if (nid) go('review', { topic: nid }); else go('home');
+      });
       $('#to-home').addEventListener('click', () => go('home'));
       $('#to-memory').addEventListener('click', () => go('memory'));
       return;
