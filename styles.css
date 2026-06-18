@@ -187,6 +187,15 @@ body {
 .subj-filter.dim { opacity: .45; }
 
 /* ---- 法令基準の表記 ---- */
+.info-page { display: flex; flex-direction: column; gap: 12px; }
+.info-h { font-size: 18px; margin: 4px 2px 0; }
+.info-card { padding: 14px 16px; }
+.info-card h3 { font-size: 15px; margin: 0 0 8px; }
+.info-card p { font-size: 13.5px; line-height: 1.7; margin: 6px 0; }
+.info-steps, .info-list { margin: 6px 0 0; padding-left: 1.25em; font-size: 13.5px; line-height: 1.8; }
+.info-steps li, .info-list li { margin: 5px 0; }
+.info-link { color: var(--brand-d); font-weight: 700; word-break: break-all; }
+.info-small { font-size: 12px; }
 .law-basis {
   text-align: center; font-size: 11px; color: var(--muted);
   margin: 18px 0 4px; letter-spacing: .02em;

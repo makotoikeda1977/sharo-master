@@ -1048,10 +1048,74 @@
     $('#mg-cross').addEventListener('click', () => go('cross'));
   }
 
+  // 使い方・お問い合わせ・プライバシーポリシー(アプリストア提出に必要な情報を含む)
+  const SUPPORT_EMAIL = '';   // TODO: サポート用メールアドレスを設定
+  const OPERATOR_NAME = '（運営者名・連絡先を設定してください）';   // TODO: 運営者
+  function renderInfo() {
+    const view = $('#view');
+    const contact = SUPPORT_EMAIL
+      ? `<a class="info-link" href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>`
+      : '<span class="muted">（お問い合わせ先メールアドレスは準備中です）</span>';
+    view.innerHTML = `
+      <section class="info-page">
+        <h2 class="info-h">使い方とアクティブリコール</h2>
+
+        <div class="card-box info-card">
+          <h3>🧠 アクティブリコールとは</h3>
+          <p>答えを「見て覚える」のではなく、問いに対して<b>自分で思い出す（検索する）</b>ことで記憶が定着する学習法です（テスト効果）。横断宮殿は、紛らわしい制度を<b>同じ軸で比べる横断表</b>と<b>○×の一問一答</b>で、思い出す力を鍛えます。</p>
+        </div>
+
+        <div class="card-box info-card">
+          <h3>📖 進め方</h3>
+          <ol class="info-steps">
+            <li><b>テーマを選ぶ</b> … まず比較表で全体像と差分をつかむ</li>
+            <li><b>一問一答を解く</b> … ○か×か、<b>まず自分で思い出して</b>答える</li>
+            <li><b>答え合わせ</b> … 解説とポイントで確認する</li>
+            <li><b>次へ／次のテーマへ</b> … 同じカテゴリーを連続で進める</li>
+          </ol>
+          <p class="muted info-small">コツ：間違えてOK。思い出そうとする過程が記憶を強くします。スキマ時間に繰り返しましょう。</p>
+        </div>
+
+        <div class="card-box info-card">
+          <h3>✉️ お問い合わせ</h3>
+          <p>不具合・ご要望・内容の誤りのご指摘は、こちらまでお願いします。</p>
+          <p>${contact}</p>
+        </div>
+
+        <div class="card-box info-card">
+          <h3>🔒 プライバシーポリシー</h3>
+          <ul class="info-list">
+            <li>本アプリは、学習データ（解答状況・設定）を<b>お使いの端末内（ブラウザのローカルストレージ）にのみ保存</b>します。</li>
+            <li>氏名・メールアドレス等の<b>個人情報は収集・送信しません</b>。アカウント登録も不要です。</li>
+            <li>通信は<b>アプリ本体（静的ファイル）の取得・更新のみ</b>で、入力内容を外部へ送信することはありません。</li>
+            <li><b>広告・アクセス解析（トラッキング）は使用していません。</b>第三者への情報提供もありません。</li>
+            <li>保存データを消したい場合は、ブラウザの当サイトのサイトデータを削除してください。</li>
+          </ul>
+        </div>
+
+        <div class="card-box info-card">
+          <h3>⚠️ ご利用上の注意（免責）</h3>
+          <ul class="info-list">
+            <li>本アプリは社会保険労務士試験の学習補助を目的としています。</li>
+            <li>出題は作成時点の現行法令に基づきますが、<b>法令は改正されます</b>。最終的な内容は最新の条文・通達等で必ずご確認ください。</li>
+            <li>本アプリの利用により生じた結果について、運営者は責任を負いかねます。</li>
+          </ul>
+        </div>
+
+        <div class="card-box info-card">
+          <h3>運営者</h3>
+          <p>${OPERATOR_NAME}</p>
+        </div>
+
+        <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>
+      </section>`;
+  }
+
   const ROUTES = {
     home: renderHome,
     cross: renderCross,
     review: renderReview,
+    info: renderInfo,
   };
 
   function go(route, params) {
