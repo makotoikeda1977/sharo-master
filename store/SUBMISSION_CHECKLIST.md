@@ -135,7 +135,7 @@ PWABuilderのiOS出力は **WKWebViewにPWAを包んだだけ** なので、Appl
 | R1 | iOS | **Guideline 4.2**: 単なるWebサイトのラップ | ネイティブ機能（通知等）追加・オフライン完結・Review Notesで価値説明・Capacitor移行 |
 | R2 | iOS | プライバシーラベル/ポリシー不備 | privacy-policy.html 公開・「Data Not Collected」申告 |
 | R3 | iOS | スクショ寸法不正・iPad欠落 | 規定寸法で用意 or iPhoneのみ申請 |
-| R4 | Android | assetlinks 検証失敗（全画面にならない） | SHA-256とパッケージ名を正しく `.well-known/assetlinks.json` に配置 |
+| R4 | Android | assetlinks 検証失敗（全画面にならない） | SHA-256とパッケージ名を正しく `.well-known/assetlinks.json` に配置。**現状のサブパス公開（/sharo-master/）では検証不可→独自ドメイン推奨**。詳細は §6 未解決事項 |
 | R5 | Android | 個人アカウントの12人/14日テスト未実施 | 事前にテスター12人確保・2週間前倒し |
 | R6 | Android | Data safety フォームと実態の不一致 | 「収集なし・端末内のみ」を正確に申告 |
 | R7 | 両方 | 法令学習アプリの内容正確性・誇大表現 | listing_ja.md は誇大表現なし・免責記載済み |
