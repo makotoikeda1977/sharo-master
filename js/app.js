@@ -614,22 +614,16 @@
             ? (session.weak ? 'いまは間違えた問題がありません。' : '復習できるカードがありません。')
             : `${session.done}枚を復習 ・ うち「忘れた」${session.again}枚`}</p>
           <div class="done-actions">
-            ${empty ? '' : `<button class="btn-primary" id="more">続けて復習</button>`}
             ${session.topicId ? `<button class="btn-primary" id="next-topic">次のテーマへ →</button>` : ''}
             <button class="btn-ghost" id="to-home">ホームへ</button>
-            <button class="btn-ghost" id="to-memory">覚え方を見る</button>
           </div>
         </section>`;
-      const more = $('#more');
-      if (more) more.addEventListener('click', () =>
-        renderReview(Date.now(), { topic: session.topicId, weak: session.weak, imported: session.imported }));
       const nextBtn = $('#next-topic');
       if (nextBtn) nextBtn.addEventListener('click', () => {
         const nid = nextTopicId(session.topicId);
         if (nid) go('review', { topic: nid }); else go('home');
       });
       $('#to-home').addEventListener('click', () => go('home'));
-      $('#to-memory').addEventListener('click', () => go('memory'));
       return;
     }
 

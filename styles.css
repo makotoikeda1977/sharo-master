@@ -417,9 +417,20 @@ table.cmp td.ans, table.cmp td.wordcloze {
   opacity: 1;
 }
 
-.rv-actions { margin-top: 16px; }
+/* 復習の操作ボタン(○×/次へ/採点)は画面下部の固定バーに置き、設問の長さによらず常に同じ位置にする */
+.rv-actions {
+  position: fixed; left: 0; right: 0;
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  z-index: 25; padding: 12px 16px;
+  background: var(--bg); border-top: 1px solid var(--line);
+}
+@media (min-width: 600px) {
+  .rv-actions { max-width: var(--maxw); margin: 0 auto; }
+}
 .rv-actions .btn-primary.big { margin-bottom: 0; }
 .rv-actions:has(.grade) { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+/* 固定バーに隠れないよう、復習画面はコンテンツ下に余白を確保 */
+.view:has(.recall) { padding-bottom: 184px; }
 .grade {
   border: none; border-radius: 12px; padding: 14px 4px; cursor: pointer;
   background: color-mix(in srgb, var(--c) 14%, #fff);
@@ -430,7 +441,7 @@ table.cmp td.ans, table.cmp td.wordcloze {
 .g-label { display: block; }
 
 /* ---- 復習の ○×ボタン ---- */
-.ox-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.ox-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 0; }
 .ox-btn {
   border-radius: 14px; padding: 22px 4px; cursor: pointer;
   background: var(--c);
@@ -668,7 +679,7 @@ table.cmp th:first-child { text-align: left; }
 
 /* ---- 復習中に開く「📊表」ボタン＋横断表オーバーレイ ---- */
 .tbl-fab {
-  position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 40;
+  position: fixed; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 40;
   background: var(--brand); color: #fff; border: none; border-radius: 999px;
   padding: 11px 17px; font-size: 14px; font-weight: 800; cursor: pointer;
   box-shadow: 0 6px 18px rgba(59,130,246,.45);
