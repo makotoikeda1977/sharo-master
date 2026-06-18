@@ -117,7 +117,7 @@
       if (window.Store.getSettings().lastNotified === today) return;
       window.Store.setSetting('lastNotified', today);
       try {
-        new Notification('社労士 横断宮殿', {
+        new Notification('社労士試験横断アプリ', {
           body: `今日の復習が${dueCount}問あります。`,
           icon: './icons/icon.svg',
         });
@@ -1069,7 +1069,7 @@
 
         <div class="card-box info-card">
           <h3>🧠 アクティブリコールとは</h3>
-          <p>答えを「見て覚える」のではなく、問いに対して<b>自分で思い出す（検索する）</b>ことで記憶が定着する学習法です（テスト効果）。横断宮殿は、紛らわしい制度を<b>同じ軸で比べる横断表</b>と<b>○×の一問一答</b>で、思い出す力を鍛えます。</p>
+          <p>答えを「見て覚える」のではなく、問いに対して<b>自分で思い出す（検索する）</b>ことで記憶が定着する学習法です（テスト効果）。本アプリは、紛らわしい制度を<b>同じ軸で比べる横断表</b>と<b>○×の一問一答</b>で、思い出す力を鍛えます。</p>
         </div>
 
         <div class="card-box info-card">

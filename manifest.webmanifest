@@ -1,6 +1,6 @@
 {
-  "name": "社労士 横断宮殿",
-  "short_name": "横断宮殿",
+  "name": "社労士試験横断アプリ",
+  "short_name": "横断アプリ",
   "id": "/",
   "description": "横断学習 × アクティブリコールで社労士試験対策",
   "start_url": "./index.html",
