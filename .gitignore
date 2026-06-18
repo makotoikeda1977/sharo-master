@@ -12,3 +12,7 @@ GEMINI.md
 # パイロット作業ファイル（本番不要）
 _pilot_*.json
 _pilot_*.py
+
+# ループ用ローカルファイル(コミット不要)
+_loop_check.js
+_loop_state.md
