@@ -179,11 +179,8 @@
         </div>
         <table class="prio-table"><tbody>${rowHTML || '<tr><td class="prio-empty muted small">該当するテーマがありません</td></tr>'}</tbody></table>
       </div>
-      ${s.weak > 0 ? `<button class="btn-ghost big weak-btn" id="start-weak">
-        🔁 間違えた問題だけ復習(${s.weak}問)
-      </button>` : ''}
       ${s.importedTotal > 0 ? `<button class="btn-ghost big imp-btn" id="start-imported">
-        📖 過去問だけ復習(${s.imported}問)
+        📖 過去問だけ解く(${s.importedTotal}問)
       </button>` : ''}
       <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>`;
 
@@ -202,13 +199,8 @@
     $$('.prio-row', view).forEach((el) =>
       el.addEventListener('click', () => { lastOrigin = 'home'; go('cross', { topic: el.dataset.topic }); }));
     restoreListScroll(view);
-    const weakBtn = $('#start-weak');
-    if (weakBtn) weakBtn.addEventListener('click', () => go('review', { weak: true }));
     const impBtn = $('#start-imported');
     if (impBtn) impBtn.addEventListener('click', () => go('review', { imported: true }));
-
-    // 1日1回の復習リマインド(通知ON時のみ)
-    Notify.maybeNotify(s.due);
   }
 
   // ============================ 横断学習 ====================================
@@ -217,11 +209,9 @@
     const topicId = params && params.topic;
     if (!topicId) {
       view.innerHTML = `
-        <button class="btn-ghost big palace-btn" id="open-palace">🏰 記憶の宮殿(場所で覚える)</button>
         <div class="topic-list">
           ${topics().map((t) => topicCardHTML(t, now)).join('')}
         </div>`;
-      $('#open-palace').addEventListener('click', () => go('palace'));
       $$('.topic-card', view).forEach((el) =>
         el.addEventListener('click', () => { lastOrigin = 'cross'; go('cross', { topic: el.dataset.topic }); }));
       restoreListScroll(view);
@@ -303,15 +293,6 @@
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
         ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
-        ${topic.palace ? `
-        <div class="palace-tip">
-          <div class="pt-head">🏰 記憶の宮殿で覚える(一例)</div>
-          ${topic.palace.intro ? `<p class="pt-intro">${topic.palace.intro}</p>` : ''}
-          <ol class="pt-steps">
-            ${topic.palace.steps.map((s) =>
-              `<li><span class="pt-spot">${s.spot}</span><span class="pt-story">${s.story}</span></li>`).join('')}
-          </ol>
-        </div>` : ''}
         ${topic.voices && topic.voices.length ? `
         <div class="voices">
           <div class="vc-head">🗣️ 制度のホンネ(ここがポイント)</div>
@@ -326,7 +307,7 @@
           }).join('')}
         </div>` : ''}
       </div>
-      <button class="btn-primary big" id="study-topic">一問一答で復習(${topic.cards.length}問)</button>`;
+      <button class="btn-primary big" id="study-topic">一問一答を解く(${topic.cards.length}問)</button>`;
 
     $('#back').addEventListener('click', () => { scrollToTopic = topic.id; go(lastOrigin); });
     $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
@@ -609,10 +590,10 @@
       view.innerHTML = `
         <section class="done">
           <div class="done-emoji">${empty ? '✅' : '🎉'}</div>
-          <h2>${empty ? '対象がありません' : (session.weak ? '苦手復習 完了!' : 'セッション完了!')}</h2>
+          <h2>${empty ? '対象がありません' : 'セッション完了!'}</h2>
           <p class="muted">${empty
-            ? (session.weak ? 'いまは間違えた問題がありません。' : '復習できるカードがありません。')
-            : `${session.done}問を復習 ・ うち「忘れた」${session.again}問`}</p>
+            ? '出題できるカードがありません。'
+            : `${session.done}問を解きました`}</p>
           <div class="done-actions">
             ${session.topicId ? `<button class="btn-primary" id="next-topic">次のテーマへ →</button>` : ''}
             <button class="btn-ghost" id="to-home">ホームへ</button>
@@ -621,7 +602,7 @@
       const nextBtn = $('#next-topic');
       if (nextBtn) nextBtn.addEventListener('click', () => {
         const nid = nextTopicId(session.topicId);
-        if (nid) go('review', { topic: nid }); else go('home');
+        if (nid) go('cross', { topic: nid }); else go('home');
       });
       $('#to-home').addEventListener('click', () => go('home'));
       return;
@@ -630,7 +611,6 @@
     const item = session.queue[session.pos];
     const total = session.queue.length;
     const card = item.card;
-    const ret = item.state.last ? Math.round(window.SRS.retention(item.state, now) * 100) : null;
     const ox = oxAnswer(card);          // '○' | '×' | null
     const subj = detectCardSubject(card, item.topic);
     const ans = session.answered;       // {choice, correct} | null
@@ -646,7 +626,6 @@
       </div>
       <div class="recall">
         <div class="recall-meta">
-          ${session.weak ? '<span class="mode-badge">🔁 苦手</span>' : ''}
           ${session.imported ? '<span class="mode-badge imp">📖 過去問</span>' : ''}
           <span class="subj-line">${item.topic.subjects.map(subjTag).join('')}</span>
           <span class="topic-name">${item.topic.title}</span>
@@ -665,9 +644,7 @@
                  <button class="ox-btn" data-ox="×" style="--c:#2563eb">× 誤り</button>
                </div>`
             : session.revealed
-              ? Object.entries(window.SRS.GRADES).map(([id, g]) =>
-                  `<button class="grade" data-grade="${id}" style="--c:${g.color}">
-                     <span class="g-label">${g.label}</span></button>`).join('')
+              ? `<button class="btn-primary big" id="next">次へ</button>`
               : `<button class="btn-primary big" id="reveal">答えを見る</button>`}
       </div>
       ${item.topic.table ? `<button class="tbl-fab" id="tbl-open">📊 表</button>` : ''}
@@ -694,11 +671,8 @@
         else if (e.key === 'x' || e.key === 'X' || e.key === '2') answerOX('×');
       };
     } else if (session.revealed) {
-      $$('.grade', view).forEach((b) => b.addEventListener('click', () => gradeCard(b.dataset.grade)));
-      document.onkeydown = (e) => {
-        const map = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
-        if (map[e.key]) gradeCard(map[e.key]);
-      };
+      $('#next').addEventListener('click', nextCard);
+      document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextCard(); } };
     } else {
       $('#reveal').addEventListener('click', () => { session.revealed = true; drawReview(); });
       document.onkeydown = (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); session.revealed = true; drawReview(); } };
@@ -1066,9 +1040,6 @@
     home: renderHome,
     cross: renderCross,
     review: renderReview,
-    memory: renderMemoryGuide,
-    palace: renderPalace,
-    chars: renderCharIntro,
   };
 
   function go(route, params) {
