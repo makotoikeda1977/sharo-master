@@ -383,6 +383,8 @@ table.cmp td.ans, table.cmp td.wordcloze {
 .recall {
   background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
   padding: 16px 18px; display: flex; flex-direction: column;
+  /* 設問・解説の長さによらず白いカードの大きさを一定に見せる(短い問題でも縮まない) */
+  min-height: 360px;
 }
 .recall-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .recall-meta .subj-line { display: inline-flex; gap: 4px; }
