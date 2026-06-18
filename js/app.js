@@ -386,6 +386,10 @@
       }
       if (any && allShort) cols.add(i);
     }
+    // 答え列が複数あって「一部の列だけ」短い場合は、意味のない太字に見えるため強調しない。
+    // (答え列が1つの横断表、または全答え列が短い均一な表のときだけ強調する)
+    const answerCols = table.headers.length - 1;
+    if (answerCols > 1 && cols.size > 0 && cols.size < answerCols) return new Set();
     return cols;
   }
   function rowLawColor(text) {
