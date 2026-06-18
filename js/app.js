@@ -15,12 +15,20 @@
     return CROSS_TOPICS.concat(window.Store.getCustomTopics());
   }
 
-  // テーマ順で次のテーマのidを返す(末尾は先頭へ循環)
+  // テーマのカテゴリー(ホームの分類と同じ): 単科＝その科目id ／ 2科目以上＝'横断'
+  function themeCategory(t) {
+    return (t.subjects && t.subjects.length === 1) ? t.subjects[0] : '横断';
+  }
+  // 同じカテゴリー内で次のテーマのidを返す(末尾は先頭へ循環)
   function nextTopicId(curId) {
     const list = topics();
-    const i = list.findIndex((t) => t.id === curId);
+    const cur = list.find((t) => t.id === curId);
+    if (!cur) return null;
+    const cat = themeCategory(cur);
+    const sameCat = list.filter((t) => themeCategory(t) === cat);
+    const i = sameCat.findIndex((t) => t.id === curId);
     if (i < 0) return null;
-    return list[(i + 1) % list.length].id;
+    return sameCat[(i + 1) % sameCat.length].id;
   }
 
   // ---- 全カードを平坦化したインデックス -----------------------------------
