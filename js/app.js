@@ -285,7 +285,7 @@
                   const em = emCols.includes(i) ? ' em' : '';
                   if (noMask.includes(i)) {
                     const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
-                    return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${c}</td>`;
+                    return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${protectNums(c)}</td>`;
                   }
                   // セル内に **太字** があれば「語句単位の赤シート」、なければセル全体マスク
                   const hasCloze = c.indexOf('**') >= 0;
@@ -293,14 +293,14 @@
                   const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
                   const inner = hasCloze
                     ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>')
-                    : `<span class="mask">${c}</span>`;
+                    : `<span class="mask">${protectNums(c)}</span>`;
                   return `<td class="${cls}"${style}>${inner}</td>`;
                 }).join('')}</tr>`;
               }).join('')}
             </tbody>
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
-        ${topic.note ? `<p class="note">💡 ${topic.note}</p>` : ''}
+        ${topic.note ? `<p class="note">💡 ${protectNums(topic.note)}</p>` : ''}
         ${topic.voices && topic.voices.length ? `
         <div class="voices">
           <div class="vc-head">🗣️ 制度のホンネ(ここがポイント)</div>
@@ -506,7 +506,8 @@
   // 科目id→キャラ名(顔は icons/chars/<科目id>.png)
   const CHAR_NAMES = { kijun: '基島規子', anei: '守谷衛', rosai: '災堂咲', koyo: '職田めぐみ', choshu: '収沢徴子', kenpo: '保科碧', konen: '厚見年実', kokunen: '国原みのり', roippan: '労井美樹', shaippan: '市役あい' };
   // 解説中の [[...]] を赤太字に
-  function hlMark(t) { return String(t == null ? '' : t).replace(/\[\[(.+?)\]\]/g, '<b class="hot">$1</b>'); }
+  function protectNums(t) { return String(t == null ? '' : t).replace(/\d{1,3}(?:,\d{3})+/g, '<span class="nbr">$&</span>'); }
+  function hlMark(t) { return protectNums(String(t == null ? '' : t).replace(/\[\[(.+?)\]\]/g, '<b class="hot">$1</b>')); }
   // 解説冒頭の自己紹介(「○ 労基の基島よ。」など)を除去。短い一文・キャラ名や「私」を含む・[[ ]]を含まないものだけを安全に削る
   function stripIntro(a) {
     return String(a == null ? '' : a).replace(
@@ -560,12 +561,12 @@
         const em = emCols.includes(i) ? ' em' : '';
         if (noMask.includes(i)) {
           const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
-          return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${c}</td>`;
+          return `<td class="ans nomask${useColC ? ' colc' : ''}${sh}${em}"${style}>${protectNums(c)}</td>`;
         }
         const hasCloze = c.indexOf('**') >= 0;
         const cls = 'ans' + (useColC ? ' colc' : '') + (hasCloze ? ' wordcloze' : '') + sh + em;
         const style = useColC ? ` style="--colc:${colAccent(i)}"` : '';
-        const inner = hasCloze ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>') : `<span class="mask">${c}</span>`;
+        const inner = hasCloze ? c.replace(/\*\*(.+?)\*\*/g, '<span class="cloze">$1</span>') : `<span class="mask">${protectNums(c)}</span>`;
         return `<td class="${cls}"${style}>${inner}</td>`;
       }).join('')}</tr>`;
     }).join('')}</tbody>`;
@@ -650,9 +651,9 @@
           <span class="topic-name">${item.topic.title}</span>
           ${card.source ? `<span class="src-badge">${card.source}</span>` : ''}
         </div>
-        <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${card.q.replace(/^【[^】]*】\s*/, '')}</div>
+        <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${protectNums(card.q.replace(/^【[^】]*】\s*/, ''))}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
-        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.p ? `<div class="kai-point"><span class="kai-plbl">📌 ポイント</span>${card.p}</div>` : ''}${subj && SUBJECTS[subj] ? `<div class="kai-spk"><img class="kai-face" src="./icons/chars/${subj}.png" style="border-color:${SUBJECTS[subj].color}" onerror="this.style.display='none'" alt=""><span class="kai-name" style="color:${SUBJECTS[subj].color}">${CHAR_NAMES[subj] || SUBJECTS[subj].short}（${SUBJECTS[subj].short}）</span></div>` : ''}<div class="kai-text">${hlMark(stripIntro(card.a))}</div></div>
+        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.p ? `<div class="kai-point"><span class="kai-plbl">📌 ポイント</span>${protectNums(card.p)}</div>` : ''}${subj && SUBJECTS[subj] ? `<div class="kai-spk"><img class="kai-face" src="./icons/chars/${subj}.png" style="border-color:${SUBJECTS[subj].color}" onerror="this.style.display='none'" alt=""><span class="kai-name" style="color:${SUBJECTS[subj].color}">${CHAR_NAMES[subj] || SUBJECTS[subj].short}（${SUBJECTS[subj].short}）</span></div>` : ''}<div class="kai-text">${hlMark(stripIntro(card.a))}</div></div>
       </div>
       <div class="rv-actions">
         ${ans

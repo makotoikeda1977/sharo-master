@@ -333,6 +333,7 @@ table.cmp td.ans .mask {
 }
 /* 語句単位の赤シート(太字だけ隠す。Anki方式) */
 table.cmp td.wordcloze { white-space: normal; }
+.nbr { white-space: nowrap; }
 table.cmp td.wordcloze .cloze {
   border-radius: 3px; padding: 0 2px; font-weight: 700;
   transition: background .12s, color .12s;
