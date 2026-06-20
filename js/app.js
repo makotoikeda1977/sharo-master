@@ -300,10 +300,9 @@
             </tbody>
           </table>
         </div>` : '<p class="muted small">このテーマは一問一答のみです。</p>'}
-        ${topic.note ? `<p class="note">💡 ${protectNums(topic.note)}</p>` : ''}
         ${topic.voices && topic.voices.length ? `
         <div class="voices">
-          <div class="vc-head">🗣️ 制度のホンネ(ここがポイント)</div>
+          <div class="vc-head">🗣️ 制度のポイント解説</div>
           ${topic.voices.map((v) => {
             const c = (v.subj && SUBJECTS[v.subj]) ? SUBJECTS[v.subj].color : '#64748b';
             const cid = v.char || (v.subj && SUBJECTS[v.subj] ? v.subj : null);

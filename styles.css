@@ -86,7 +86,7 @@ body {
 [data-theme="dark"] .pt-story { color: #e2e8f0; }
 [data-theme="dark"] .pt-head { color: #c4b5fd; }
 
-/* ---- 制度のホンネ(差分セリフ) ---- */
+/* ---- 制度のポイント解説(差分セリフ) ---- */
 .voices { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line); }
 .vc-head { font-weight: 800; font-size: 13.5px; color: #334155; margin-bottom: 8px; }
 .vc-row { display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; margin-bottom: 10px; }
