@@ -2513,7 +2513,6 @@ const CROSS_TOPICS = [
     table: {
       headers: ['本人の給付', '被扶養者（家族）の給付'],
       noMaskCols: [0, 1],
-      emCols: [1],
       rows: [
         ['療養の給付', '家族療養費'],
         ['訪問看護療養費', '家族訪問看護療養費'],
