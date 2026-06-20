@@ -307,9 +307,11 @@
           ${topic.voices.map((v) => {
             const c = (v.subj && SUBJECTS[v.subj]) ? SUBJECTS[v.subj].color : '#64748b';
             const cid = v.char || (v.subj && SUBJECTS[v.subj] ? v.subj : null);
-            const face = cid ? `<img class="vc-face" src="./icons/chars/${cid}.png" style="border-color:${c}" onerror="this.style.display='none'" alt="">` : '';
+            // 画像が無いときは消さずプレースホルダ枠を残す（人物横断のイラスト用にスペース確保）
+            const face = cid ? `<img class="vc-face" src="./icons/chars/${cid}.png" style="border-color:${c}" onerror="this.classList.add('vc-ph');this.removeAttribute('src')" alt="">` : '';
+            const who = (v.subj === 'jinbutsu') ? (v.name || '人物') : (v.subj && SUBJECTS[v.subj] ? SUBJECTS[v.subj].short : v.name);
             return `<div class="vc-row" style="--vc:${c}">
-              <span class="vc-who">${face}<span class="vc-name">${v.subj && SUBJECTS[v.subj] ? SUBJECTS[v.subj].short : v.name}</span></span>
+              <span class="vc-who">${face}<span class="vc-name">${who}</span></span>
               <span class="vc-line">${v.line}</span>
             </div>`;
           }).join('')}
@@ -504,7 +506,7 @@
   }
 
   // 科目id→キャラ名(顔は icons/chars/<科目id>.png)
-  const CHAR_NAMES = { kijun: '基島規子', anei: '守谷衛', rosai: '災堂咲', koyo: '職田めぐみ', choshu: '収沢徴子', kenpo: '保科碧', konen: '厚見年実', kokunen: '国原みのり', roippan: '労井美樹', shaippan: '市役あい' };
+  const CHAR_NAMES = { kijun: '基島規子', anei: '守谷衛', rosai: '災堂咲', koyo: '職田めぐみ', choshu: '収沢徴子', kenpo: '保科碧', konen: '厚見年実', kokunen: '国原みのり', roippan: '労井美樹', shaippan: '市役あい', jinbutsu: '人物' };
   // 解説中の [[...]] を赤太字に
   function protectNums(t) { return String(t == null ? '' : t).replace(/\d{1,3}(?:,\d{3})+/g, '<span class="nbr">$&</span>'); }
   function hlMark(t) { return protectNums(String(t == null ? '' : t).replace(/\[\[(.+?)\]\]/g, '<b class="hot">$1</b>')); }
