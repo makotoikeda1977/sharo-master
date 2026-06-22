@@ -456,14 +456,13 @@
     // 過去問モード: インポートしたカードだけに絞る
     if (opts && opts.imported) cards = cards.filter((c) => c.topic.custom);
 
-    // 苦手モード: 期限を問わず「間違えた問題」を苦手な順(忘れた回数→低保持率)に
+    // 弱点補強: 「間違えた問題(正解で解除されていないもの)」を苦手な順(忘れた回数→低保持率)に全件
     if (opts && opts.weak) {
       return cards
         .filter((c) => window.SRS.isWeak(c.state))
         .sort((a, b) =>
           (b.state.lapses || 0) - (a.state.lapses || 0) ||
-          window.SRS.retention(a.state, now) - window.SRS.retention(b.state, now))
-        .slice(0, 30);
+          window.SRS.retention(a.state, now) - window.SRS.retention(b.state, now));
     }
 
     // 全カードを毎回ランダムな順で出題(復習スケジュール・上限なし)
@@ -471,9 +470,11 @@
   }
 
   function renderReview(now, params) {
-    const weak = !!(params && params.weak);
     const imported = !!(params && params.imported);
-    const queue = buildQueue(now, { topic: params && params.topic, weak, imported });
+    const topicId = params && params.topic;
+    // ナビの「弱点補強」タブ(テーマ指定なし・過去問モードなし)は誤答のみを集約して出題
+    const weak = !!(params && params.weak) || (!topicId && !imported);
+    const queue = buildQueue(now, { topic: topicId, weak, imported });
     session = {
       queue, pos: 0, revealed: false, answered: null, graded: false, done: 0, again: 0,
       topicId: params && params.topic, weak, imported,
@@ -613,12 +614,15 @@
     const now = Date.now();
     if (session.pos >= session.queue.length) {
       const empty = session.done === 0;
+      const weakEmpty = empty && session.weak;
       view.innerHTML = `
         <section class="done">
-          <div class="done-emoji">${empty ? '✅' : '🎉'}</div>
-          <h2>${empty ? '対象がありません' : 'セッション完了!'}</h2>
+          <div class="done-emoji">${empty ? (weakEmpty ? '💪' : '✅') : '🎉'}</div>
+          <h2>${empty ? (weakEmpty ? '弱点はありません' : '対象がありません') : 'セッション完了!'}</h2>
           <p class="muted">${empty
-            ? '出題できるカードがありません。'
+            ? (weakEmpty
+                ? 'まだ間違えた問題がありません。各テーマで一問一答を解くと、間違えた問題がここに集まります。'
+                : '出題できるカードがありません。')
             : `${session.done}問を解きました`}</p>
           <div class="done-actions">
             ${session.topicId ? `<button class="btn-primary" id="next-topic">次のテーマへ →</button>` : ''}
@@ -726,9 +730,15 @@
     document.onkeydown = null;
     const item = session.queue[session.pos];
     const correct = (choice === oxAnswer(item.card));
-    if (!session.graded) {  // 練習カウントのみ(SRS採点・復習スケジュールは廃止)
+    if (!session.graded) {
       session.done++;
       if (!correct) session.again++;
+      // 誤答を永続記録(弱点補強タブの集約用)。正解したら弱点を解除する。
+      const t = Date.now();
+      const st = item.state || window.SRS.freshState();
+      const newState = { ...st, last: t, lapses: correct ? 0 : (st.lapses || 0) + 1 };
+      window.Store.setCardState(item.topic.id, item.idx, newState);
+      item.state = newState;
       session.graded = true;
     }
     session.answered = { choice, correct };
@@ -1051,7 +1061,7 @@
           <li><b>横断の比較表を"家"に配置</b> … 「適用事業所」なら、玄関の表札＝法人(無条件で強制)、廊下の行列＝17業種、居間の5脚の椅子＝5人以上…のように各部屋へ。各テーマの 💡要点 にある<b>「🏰記憶の宮殿で覚える(一例)」</b>がその見本です。</li>
           <li><b>数字を場所＋語呂で</b> … 人数・日数・率(700人/3,000人、14日以内、4分の3 等)は、置き場所と語呂をセットにすると混同しにくい。</li>
           <li><b>数字はシンボル(形)に変える</b> … 覚えにくい数字は、形の似たモノに置き換えて"絵"にします(例: 1=ろうそく🕯 / 2=白鳥🦢 / 3=耳👂 / 4=ヨット⛵ / 5=フック / 8=雪だるま⛄ / 0=ボール⚽)。「常時5人以上」なら壁にフックが5本、「14日以内」ならカレンダーに石(14=いし)…のように、数字をモノの絵にして場所に置くと、人数・日数・率が混同しにくくなります。</li>
-          <li><b>赤シート＋アクティブリコール</b> … まず宮殿で全体像を作り、横断表の赤シートと「問題」タブの○×で思い出す練習を繰り返す。</li>
+          <li><b>赤シート＋アクティブリコール</b> … まず宮殿で全体像を作り、横断表の赤シートと各テーマの一問一答(○×)で思い出す練習を繰り返す。間違えた問題は「弱点補強」タブに集まるので、そこで重点復習する。</li>
           <li><b>忘却曲線で復習</b> … このアプリの出題間隔(間隔反復)に合わせて宮殿を歩き直すと、本試験まで保持できます。</li>
         </ul>
       </div>
