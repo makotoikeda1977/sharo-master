@@ -659,7 +659,7 @@
         </div>
         <div class="q">${subj && SUBJECTS[subj] ? `<span class="q-subj" style="--c:${SUBJECTS[subj].color}">${SUBJECTS[subj].short}</span>` : ''}${protectNums(card.q.replace(/^【[^】]*】\s*/, ''))}</div>
         ${card.hint ? `<div class="hint" id="hint">ヒントを見る</div>` : ''}
-        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${card.p ? `<div class="kai-point"><span class="kai-plbl">📌 ポイント</span>${protectNums(card.p)}</div>` : ''}${subj && SUBJECTS[subj] ? `<div class="kai-spk"><img class="kai-face" src="./icons/chars/${subj}.png" style="border-color:${SUBJECTS[subj].color}" onerror="this.style.display='none'" alt=""><span class="kai-name" style="color:${SUBJECTS[subj].color}">${CHAR_NAMES[subj] || SUBJECTS[subj].short}（${SUBJECTS[subj].short}）</span></div>` : ''}<div class="kai-text">${hlMark(stripIntro(card.a))}</div></div>
+        <div class="a ${showAnswer ? 'show' : ''}" id="answer">${subj && SUBJECTS[subj] ? `<div class="kai-spk"><img class="kai-face" src="./icons/chars/${subj}.png" style="border-color:${SUBJECTS[subj].color}" onerror="this.style.display='none'" alt=""><span class="kai-name" style="color:${SUBJECTS[subj].color}">${CHAR_NAMES[subj] || SUBJECTS[subj].short}（${SUBJECTS[subj].short}）</span></div>` : ''}<div class="kai-text">${hlMark(stripIntro(card.a))}</div></div>
       </div>
       <div class="rv-actions">
         ${ans
@@ -1084,7 +1084,7 @@
           <ol class="info-steps">
             <li><b>テーマを選ぶ</b> … まず比較表で全体像と差分をつかむ</li>
             <li><b>一問一答を解く</b> … ○か×か、<b>まず自分で思い出して</b>答える</li>
-            <li><b>答え合わせ</b> … 解説とポイントで確認する</li>
+            <li><b>答え合わせ</b> … 解説で確認する</li>
             <li><b>次へ／次のテーマへ</b> … 同じカテゴリーを連続で進める</li>
           </ol>
           <p class="muted info-small">コツ：間違えてOK。思い出そうとする過程が記憶を強くします。スキマ時間に繰り返しましょう。</p>
