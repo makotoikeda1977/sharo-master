@@ -493,7 +493,11 @@
       ['choshu',  /労働保険の保険料の徴収|労働保険徴収法|徴収法|労働保険の保険関係/],
       ['kijun',   /労働基準法/],
     ];
-    // ① q冒頭の【法令名】を最優先で判定(本文中の他法令への言及で誤判定しないように)
+    // ① q冒頭の【科目・第N回】の短縮科目名を最優先で判定(例:【厚年・第44回】→konen)
+    const SHORT = { '労基': 'kijun', '安衛': 'anei', '労災': 'rosai', '雇用': 'koyo', '徴収': 'choshu', '健保': 'kenpo', '厚年': 'konen', '国年': 'kokunen', '労一': 'roippan', '社一': 'shaippan', '人物': 'jinbutsu' };
+    const headShort = (card.q || '').match(/^【([^・】]+)/);
+    if (headShort && SHORT[headShort[1]]) return SHORT[headShort[1]];
+    // ② q冒頭の【法令名】で判定(本文中の他法令への言及で誤判定しないように)
     const head = (card.q || '').match(/^【([^】]*)】/);
     if (head) {
       for (const [id, re] of rules) if (re.test(head[1])) return id;
