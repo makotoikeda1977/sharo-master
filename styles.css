@@ -236,7 +236,7 @@ body {
 .topic-card:active { transform: scale(.99); border-color: var(--line); }
 .topic-head { display: flex; align-items: center; justify-content: space-between; }
 .topic-head h3 { margin: 0; font-size: 16px; }
-.pill { background: #eef2ff; color: var(--brand-d); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 2px 9px; }
+.pill { background: #eef2ff; color: var(--brand-d); border-radius: 999px; font-size: 11px; font-weight: 700; padding: 2px 9px; white-space: nowrap; flex: none; }
 .topic-prog { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .mini-track { flex: 1; height: 6px; background: #eef2f7; border-radius: 99px; overflow: hidden; }
 .mini-fill { height: 100%; background: linear-gradient(90deg, var(--brand), #6366f1); }

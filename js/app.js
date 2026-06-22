@@ -259,13 +259,13 @@
         </div>
         <div class="table-wrap" id="cmp-wrap">
           <table class="cmp${multiCol ? ' wide' : ''}">
-            <thead><tr>${topic.table.headers.map((h, i) => {
-                const cid = lawCharId(h);
+            <thead><tr>${(() => { const _cids = topic.table.headers.map(lawCharId); const _allFace = _cids.length > 1 && _cids.slice(1).every(Boolean); return topic.table.headers.map((h, i) => {
+                const cid = _allFace ? lawCharId(h) : null;
                 const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" onerror="this.style.display='none'" alt="">` : '';
                 const cls = (multiCol && i > 0) ? ' class="colh"' : '';
                 const style = (multiCol && i > 0) ? ` style="--colc:${colAccent(i)}"` : '';
                 return `<th${cls}${style}>${face}${h}</th>`;
-              }).join('')}</tr></thead>
+              }).join(''); })()}</tr></thead>
             <tbody>${topic.table.rows.map((r, ri) => {
                 const rowColors = topic.table.rowColors;
                 const lc = (rowColors && rowColors[ri]) || rowLawColor(r[0]) ||
@@ -538,8 +538,9 @@
         ri += n;
       }
     }
+    const _cids = t.headers.map(lawCharId); const _allFace = _cids.length > 1 && _cids.slice(1).every(Boolean);
     const thead = `<thead><tr>${t.headers.map((h, i) => {
-      const cid = lawCharId(h);
+      const cid = _allFace ? lawCharId(h) : null;
       const face = cid ? `<img class="colface" src="./icons/chars/${cid}.png" style="border-color:${rowLawColor(h) || '#cbd5e1'}" onerror="this.style.display='none'" alt="">` : '';
       const cls = (multiCol && i > 0) ? ' class="colh"' : '';
       const style = (multiCol && i > 0) ? ` style="--colc:${colAccent(i)}"` : '';
