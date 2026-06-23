@@ -1129,6 +1129,7 @@
         <div class="card-box info-card">
           <h3>運営者</h3>
           <p>${OPERATOR_NAME}</p>
+          <p><a href="./privacy.html" style="color:#284d7f">プライバシーポリシー</a></p>
         </div>
 
         <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>
