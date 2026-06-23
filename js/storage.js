@@ -82,6 +82,14 @@
     persist();
   }
 
+  // ---- 課金(全テーマ解放) ----------------------------------------------
+  function isPro() {
+    return !!getSettings().pro;
+  }
+  function setPro(v) {
+    setSetting('pro', !!v);
+  }
+
   // ---- 設定(テーマ・リマインダーなど) ----------------------------------
   function getSettings() {
     return _data.settings || (_data.settings = {});
@@ -107,5 +115,6 @@
     getAllCardStates, reset, exportJSON, importJSON,
     getSettings, setSetting,
     getCustomTopics, setCustomTopics,
+    isPro, setPro,
   };
 })();

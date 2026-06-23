@@ -15,6 +15,69 @@
     return CROSS_TOPICS.concat(window.Store.getCustomTopics());
   }
 
+  // ============================ 課金(フリーミアム) ========================
+  // 無料でお試しできるテーマ(3つ)。これ以外は購入で解放。インポート分は常に無料。
+  let currentRoute = 'home', currentParams = null;
+  const FREE_THEMES = new Set(['tekiyo-jigyosho', 'nini-kanyu', 'shikaku-tokushitsu']);
+  function isLocked(topicId) {
+    if (!topicId) return false;
+    if (window.Store.isPro()) return false;
+    if (FREE_THEMES.has(topicId)) return false;
+    const t = topics().find((x) => x.id === topicId);
+    if (t && t.custom) return false;   // インポートした過去問は無料
+    return true;
+  }
+  // 購入完了時にネイティブ(Capacitor/StoreKit)から呼ばれる。Webからは復元用にも使う。
+  window.sharoUnlock = function () {
+    window.Store.setPro(true);
+    try { go(currentRoute, currentParams); } catch (e) { go('home'); }
+  };
+  // 購入/復元の橋渡し。ネイティブが window.SharoBilling を注入していればそれを使う。
+  function buyPro() {
+    if (window.SharoBilling && typeof window.SharoBilling.purchase === 'function') {
+      window.SharoBilling.purchase('pro_all_unlock');
+    } else {
+      alert('全テーマの解放は、App Store版アプリ内でご購入いただけます。');
+    }
+  }
+  function restorePro() {
+    if (window.SharoBilling && typeof window.SharoBilling.restore === 'function') {
+      window.SharoBilling.restore();
+    } else {
+      alert('購入の復元は、App Store版アプリ内で行えます。');
+    }
+  }
+  // ロックされたテーマを開いたときのペイウォール画面
+  function renderPaywall(view, topic) {
+    const total = CROSS_TOPICS.length;
+    const totalQ = CROSS_TOPICS.reduce((s, t) => s + (t.cards ? t.cards.length : 0), 0);
+    const freeTitles = [...FREE_THEMES].map((id) => {
+      const t = CROSS_TOPICS.find((x) => x.id === id); return t ? t.title : id;
+    });
+    view.innerHTML = `
+      <button class="link-back" id="back">← テーマ一覧</button>
+      <section class="paywall">
+        <div class="pw-lock">🔒</div>
+        <h2 class="pw-title">${topic ? topic.title : 'このテーマ'}</h2>
+        <p class="pw-sub">このテーマはお試し対象外です</p>
+        <div class="pw-card">
+          <div class="pw-headline">すべての横断テーマを解放</div>
+          <ul class="pw-feat">
+            <li>全 <b>${total}</b> テーマ・約 <b>${(Math.floor(totalQ / 100) * 100).toLocaleString()}</b> 問の過去問○×</li>
+            <li>令和7年度の現行法で全問チェック済み</li>
+            <li>間違えた問題は「弱点補強」に自動集約</li>
+            <li>オフライン対応・一度の購入でずっと使える</li>
+          </ul>
+          <button class="btn-primary big" id="pw-buy">全テーマを解放する</button>
+          <button class="btn-ghost" id="pw-restore">購入を復元する</button>
+        </div>
+        <p class="pw-free small muted">無料でお試しできるテーマ：${freeTitles.join('・')}</p>
+      </section>`;
+    $('#back').addEventListener('click', () => go(lastOrigin));
+    $('#pw-buy').addEventListener('click', buyPro);
+    $('#pw-restore').addEventListener('click', restorePro);
+  }
+
   // テーマのカテゴリー(ホームの分類と同じ): 単科＝その科目id ／ 2科目以上＝'横断'
   function themeCategory(t) {
     return (t.subjects && t.subjects.length === 1) ? t.subjects[0] : '横断';
@@ -170,7 +233,7 @@
             <div class="prio-title">${r.t.title}</div>
             <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
           </td>
-          <td class="prio-stat"><span class="pill">${r.t.cards.length}問</span></td>
+          <td class="prio-stat">${isLocked(r.t.id) ? '<span class="pill lock">🔒</span>' : `<span class="pill">${r.t.cards.length}問</span>`}</td>
         </tr>`).join('');
 
     view.innerHTML = `
@@ -227,6 +290,7 @@
     }
 
     const topic = topics().find((t) => t.id === topicId);
+    if (isLocked(topicId)) { renderPaywall(view, topic); return; }
     // 答え列が2つ以上ある表は、列ごとに色を分けて区別しやすくする
     const multiCol = !!(topic.table && topic.table.headers && topic.table.headers.length >= 3);
     const noMask = (topic.table && Array.isArray(topic.table.noMaskCols)) ? topic.table.noMaskCols : [];
@@ -452,6 +516,8 @@
   function buildQueue(now, opts) {
     const topicId = opts && opts.topic;
     let cards = withState(allCards(), now);
+    // 未購入ならロックされたテーマのカードは出題しない(弱点補強等)
+    cards = cards.filter((c) => !isLocked(c.topic.id));
     if (topicId) cards = cards.filter((c) => c.topic.id === topicId);
     // 過去問モード: インポートしたカードだけに絞る
     if (opts && opts.imported) cards = cards.filter((c) => c.topic.custom);
@@ -1101,6 +1167,17 @@
         </div>
 
         <div class="card-box info-card">
+          <h3>🔓 すべてのテーマを解放</h3>
+          ${window.Store.isPro()
+            ? '<p class="muted">✅ 全テーマ解放済みです。ありがとうございます。</p>'
+            : `<p>無料でお試しできるのは<b>3テーマ</b>です。アプリ内で購入すると、全<b>${CROSS_TOPICS.length}</b>テーマ・約2,500問がすべて使えるようになります（一度の購入でずっと利用可・追加料金なし）。</p>
+          <div class="info-actions">
+            <button class="btn-primary" id="info-buy">全テーマを解放する</button>
+            <button class="btn-ghost" id="info-restore">購入を復元する</button>
+          </div>`}
+        </div>
+
+        <div class="card-box info-card">
           <h3>✉️ お問い合わせ</h3>
           <p>不具合・ご要望・内容の誤りのご指摘は、こちらまでお願いします。</p>
           <p>${contact}</p>
@@ -1134,6 +1211,17 @@
 
         <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>
       </section>`;
+    const ib = $('#info-buy'); if (ib) ib.addEventListener('click', buyPro);
+    const ir = $('#info-restore'); if (ir) ir.addEventListener('click', restorePro);
+    // 動作確認用: 末尾の表記を7回タップで解放状態を切替(本人テスト用・ネイティブ版ではStoreKitが正)
+    const lb = $('.law-basis');
+    if (lb) {
+      let tap = 0, tmr = null;
+      lb.addEventListener('click', () => {
+        tap++; clearTimeout(tmr); tmr = setTimeout(() => { tap = 0; }, 1500);
+        if (tap >= 7) { tap = 0; window.Store.setPro(!window.Store.isPro()); alert(window.Store.isPro() ? '🔓 全テーマを解放しました（テスト）' : '🔒 お試しモードに戻しました（テスト）'); go('info'); }
+      });
+    }
   }
 
   const ROUTES = {
@@ -1145,6 +1233,7 @@
 
   function go(route, params) {
     document.onkeydown = null;
+    currentRoute = route; currentParams = params;
     $$('.nav-item').forEach((n) => n.classList.toggle('active', n.dataset.route === route));
     window.scrollTo(0, 0);
     ROUTES[route](Date.now(), params);
