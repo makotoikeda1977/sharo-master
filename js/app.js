@@ -237,7 +237,6 @@
         </tr>`).join('');
 
     view.innerHTML = `
-      <input type="search" id="theme-search" class="theme-search" placeholder="🔍 テーマ・キーワードを検索（例: 時効、4分の3）" value="${homeQuery.replace(/"/g, '&quot;')}" autocomplete="off">
       <div class="subj-filter${homeQuery ? ' dim' : ''}">
         <button class="sfchip${homeSubj === null && !homeQuery ? ' on' : ''}" data-subj="">横断</button>
         ${subjList.map((sj) =>
@@ -255,16 +254,6 @@
       </button>` : ''}
       <p class="law-basis">令和7年度法令基準 ／ 全問を現行法令・過去問原文と照合して作成</p>`;
 
-    const searchInp = $('#theme-search');
-    searchInp.addEventListener('input', () => {
-      homeQuery = searchInp.value.trim();
-      renderHome(Date.now());
-      // 再描画で失うフォーカスとカーソル位置を復元
-      requestAnimationFrame(() => {
-        const i = $('#theme-search');
-        if (i) { i.focus(); const len = i.value.length; i.setSelectionRange(len, len); }
-      });
-    });
     $$('.sfchip', view).forEach((b) =>
       b.addEventListener('click', () => { homeQuery = ''; homeSubj = b.dataset.subj || null; renderHome(Date.now()); }));
     $$('.prio-row', view).forEach((el) =>
