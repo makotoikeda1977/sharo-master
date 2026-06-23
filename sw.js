@@ -1,5 +1,5 @@
 /* Service Worker — オフラインでも使えるよう静的アセットをキャッシュ */
-const CACHE = 'sharo-v756';
+const CACHE = 'sharo-v757';
 const ASSETS = [
   './',
   './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
   './js/charts.js',
   './js/import.js',
   './js/app.js',
+  './js/billing.js',
 ];
 
 self.addEventListener('install', (e) => {

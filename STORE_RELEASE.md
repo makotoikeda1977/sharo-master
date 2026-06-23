@@ -1,80 +1,91 @@
 # iOS App Store 公開 手順書（社労士試験 横断アプリ）
 
-PWA（https://makotoikeda1977.github.io/sharo-master/ ）を **PWABuilder** で iOS（Xcode）プロジェクトに包み、App Store に提出する手順。Mac/Xcode は準備済み・Apple Developer は未登録の前提。
+買い切りの**アプリ内課金（無料3テーマ → 全テーマ解放）**を入れたため、ラッパーは **Capacitor** を使う（素のPWABuilder/WebView単体ではIAPが扱えないため）。Mac/Xcode は準備済み・Apple Developer は未登録の前提。
+
+> 課金のWeb側は実装済み：`app.js` が `window.SharoBilling.purchase()/restore()` を呼び、購入/復元の確認で `window.sharoUnlock()` が走って全テーマ解放。ネイティブ側の橋渡しは `js/billing.js`（cordova-plugin-purchaseがある時だけ作動、Web版では無害）。
 
 ---
 
-## 0. 全体像（所要：審査込みで1〜2週間）
-1. Apple Developer Program に登録（$99/年）… **池田さん本人の作業・1〜2日で承認**
-2. PWABuilder で iOS パッケージ（Xcodeプロジェクト）を生成
-3. Xcode で署名（自分のApple Developerアカウント）してアーカイブ
-4. App Store Connect でアプリ枠を作成し、掲載情報・スクショ・プライバシーを入力
-5. アーカイブをアップロード → 審査提出 → 公開
+## 0. 全体像（審査込みで1〜2週間）
+1. Apple Developer Program 登録（$99/年）… **本人作業**
+2. Capacitorプロジェクト作成 → このWebアプリを中に入れる（オフライン同梱）
+3. IAPプラグイン導入 → App Store ConnectでIAP商品（非消費型）を作成
+4. Xcodeで署名・ビルド・アップロード
+5. App Store Connectで掲載情報・スクショ・審査提出
 
 ---
 
-## 1. Apple Developer Program 登録（本人作業・必須）
-- https://developer.apple.com/jp/programs/ から「登録」。
-- Apple ID（できれば普段使いと別の事業用が望ましいが、個人なら既存でも可）。
-- **個人(Individual)** で登録（屋号で出すなら法人/個人事業のD-U-N-Sが要る。まずは個人で可）。
-- 年額 11,800円（$99）。承認まで数時間〜2日。
-- App Store上の販売者名（Individualだと本名「Makoto Ikeda / 池田 誠」が表示される点に留意）。
+## 1. Apple Developer Program 登録（本人・必須）
+- https://developer.apple.com/jp/programs/ →「登録」。年額 11,800円。承認まで数時間〜2日。
+- まずは **個人(Individual)** で可（販売者名に本名が出る点に留意）。
 
-## 2. PWABuilder で iOS パッケージ生成
-1. https://www.pwabuilder.com/ を開く。
-2. URL欄に `https://makotoikeda1977.github.io/sharo-master/` を入力 → Start。
-3. スコア（Manifest / Service Worker / Security）が緑であることを確認（本リポは対応済み）。
-4. 「Package For Stores」→ **iOS** → Generate。
-5. ダウンロードした zip を解凍。中に Xcode プロジェクト一式が入っている。
-   - 入力する Bundle ID（例）: `jp.ed.butterfly.yokudan`
-   - App name: `社労士試験 横断アプリ`
-   - URL: 上記のPWA URL
-   - ※PWABuilderのiOSは WKWebView ラッパー方式。**この方式はAppleガイドライン4.2に注意**（→ §6）。
+## 2. Capacitorプロジェクト作成（このWebを同梱）
+ターミナル（Mac・Node必須）で、sharo-master とは別の作業フォルダに：
+```bash
+# 作業フォルダ作成
+mkdir sharo-ios && cd sharo-ios
+npm init -y
+npm i @capacitor/core @capacitor/cli @capacitor/ios
+npx cap init "社労士試験 横断アプリ" "jp.ed.butterfly.yokudan" --web-dir=www
 
-## 3. Xcode で署名・アーカイブ
-1. 解凍した `.xcodeproj` / `.xcworkspace` を Xcode で開く。
-2. Signing & Capabilities → Team に自分のApple Developerアカウントを設定（自動署名でOK）。
-3. Bundle Identifier を §2 の値に。
-4. アイコンは本リポの `icons/icon-512.png`（新デザイン）を使用。PWABuilderが取り込むが、未反映なら Assets.xcassets の AppIcon に1024px版を差し込む（`~/Downloads/アプリアイコン.png` が1024px）。
-5. 実機/シミュレータで起動確認（オフラインでも動くこと・○×が出ること）。
-6. Product → Archive → Distribute App → App Store Connect → Upload。
+# Webアプリ一式を www/ に入れる（このリポの中身をコピー）
+mkdir www
+cp -R ~/Downloads/sharo-master/* www/
+# 不要物は消してよい（任意）: rm -rf www/.git www/*.md www/icon_backup_*
 
-## 4. App Store Connect でアプリ作成
+npx cap add ios
+npx cap sync ios
+```
+- `--web-dir=www` に**このリポの静的ファイルをそのまま同梱**＝オフラインで完全動作（審査4.2対策にも有効）。
+- アプリ名 / Bundle ID（例 `jp.ed.butterfly.yokudan`）は控えておく。
+
+## 3. アプリ内課金（IAP）プラグイン導入
+```bash
+npm i cordova-plugin-purchase
+npx cap sync ios
+```
+- これで WebView 内に `CdvPurchase` が注入され、同梱済みの `js/billing.js` が自動で `window.SharoBilling` を有効化する（商品ID = `pro_all_unlock`）。
+- StoreKit用に Xcode で **In-App Purchase capability** を追加（§5）。
+
+## 4. App Store Connect：アプリ枠＋IAP商品を作成
 https://appstoreconnect.apple.com/ → マイApp → ＋ → 新規App
-- プラットフォーム: iOS
-- 名前: **社労士試験 横断アプリ**（30字以内・ストア内で一意）
-- プライマリ言語: 日本語
-- バンドルID: §2で作ったもの
-- SKU: 任意（例 `yokudan-001`）
+- プラットフォーム: iOS／名前: **社労士試験 横断アプリ**／言語: 日本語／バンドルID: §2の値／SKU: 任意
 
-### 掲載情報（コピーは §5）
-- カテゴリ: **教育**
-- 年齢制限: **4+**
+### IAP（アプリ内課金）商品
+- 「App内課金」→ ＋ → **非消費型（Non-Consumable）**
+- **プロダクトID: `pro_all_unlock`**（`js/billing.js` と一致・厳守）
+- 参照名: 全テーマ解放／表示名（日本語）: 全テーマを解放／説明: 全274テーマ・約2,500問が使い放題
+- **価格: 推奨 ¥980（買い切り）**（競合の書籍¥1,760より安く・一度の購入でずっと利用可。¥600〜¥1,200で調整可）
+- 審査用のスクショ（課金画面）を1枚添付（使い方ページの「全テーマを解放」or ロックテーマのペイウォール画面）
+
+## 5. Xcodeで署名・ビルド
+```bash
+npx cap open ios   # Xcodeが開く
+```
+- Signing & Capabilities → Team に自分のApple Developerを設定（自動署名）／Bundle Id を §2 に。
+- ＋ Capability → **In-App Purchase** を追加。
+- アイコン：`Assets.xcassets > AppIcon` に **1024px**（`~/Downloads/アプリアイコン.png`）を入れる。
+- シミュレータ/実機で動作確認：①機内モードでも起動・○×が出る ②ロックテーマでペイウォール ③Sandboxアカウントで購入→解放→「購入を復元」も動く（Sandboxは App Store Connect > ユーザーとアクセス > Sandbox で作成）。
+- Product → Archive → Distribute App → App Store Connect → Upload。
+
+## 6. 掲載情報（コピーはそのまま使えます）
+- カテゴリ: **教育**／年齢制限: **4+**／価格（アプリ本体）: **無料**（課金は上記IAP）
 - プライバシーポリシーURL: `https://makotoikeda1977.github.io/sharo-master/privacy.html`
 - サポートURL: `https://makotoikeda1977.github.io/sharo-master/`
-- 価格: **無料**（有料/App内課金にするなら別途設定）
-
-### App プライバシー（データ収集の申告）
-- 「データを収集していません（No Data Collected）」を選択。
-- 本アプリは個人情報を収集せず、学習データは端末内localStorageのみ（privacy.html と一致）。トラッキング無し・広告無し。
-
-## 5. ストア掲載コピー（そのまま使えます）
+- App プライバシー: **データを収集していません**（広告/解析/トラッキング無し・端末内localStorageのみ）
 
 **App名（30字以内）**
 ```
 社労士試験 横断アプリ
 ```
-
 **サブタイトル（30字以内）**
 ```
 過去問で横断攻略・苦手を弱点補強
 ```
-
-**プロモーションテキスト（170字以内・審査不要で随時変更可）**
+**プロモーションテキスト（170字以内・随時変更可）**
 ```
-社労士試験の「似ているけど違う」を横断テーマで整理。274テーマ・約2,500問の過去問○×を、現行法（令和7年度）で全問チェック済み。間違えた問題は「弱点補強」に自動で集約。オフラインでスキマ時間に。
+社労士試験の「似ているけど違う」を横断テーマで整理。274テーマ・約2,500問の過去問○×を、現行法（令和7年度）で全問チェック済み。間違えた問題は「弱点補強」に自動で集約。まず3テーマを無料でお試しできます。
 ```
-
 **説明文**
 ```
 社労士試験は「似ているのに少し違う」論点の宝庫です。本アプリは、健保・厚年・国年・労基・労災・雇用・徴収・労一・社一を横断テーマで整理し、過去問の○×でアクティブリコール（思い出す練習）を回して定着させる学習アプリです。
@@ -85,59 +96,43 @@ https://appstoreconnect.apple.com/ → マイApp → ＋ → 新規App
 ・現行法で全問チェック済み：令和7年度の法令・条文に照らして正誤を検証（改正点も反映）
 ・弱点補強：間違えた問題だけが自動で集まり、重点的に復習できる
 ・赤シート＆比較表：差分が一目で分かる横断比較表。覚えるべき差分を重点表示
-・オフライン対応：一度開けば電波がなくてもサクサク。スキマ時間に最適
-・登録不要・無料：アカウント登録なし。個人情報は一切収集しません
+・オフライン対応：一度開けば電波がなくてもサクサク
+・まず無料でお試し：3テーマは無料。全テーマは一度の購入（買い切り）で解放、追加料金なし
 
 ■ こんな方に
 ・科目別の勉強は終わったが、横断の整理で点を伸ばしたい
 ・通勤・休憩のスキマ時間に過去問を回したい
-・「どっちがどっちだっけ」を一掃したい
 
-※本アプリは学習補助を目的としたものであり、合格を保証するものではありません。
+※学習補助を目的としたものであり、合格を保証するものではありません。
 ```
-
 **キーワード（100字・カンマ区切り）**
 ```
 社労士,社会保険労務士,社労士試験,横断,過去問,一問一答,労働基準法,健康保険,厚生年金,国民年金,労災,雇用保険,徴収法,資格,暗記,赤シート
 ```
 
-**サポート用 問い合わせ**: ikeda@butterfly.ed.jp
+## 7. ⚠️ 審査リスク（4.2「最低限の機能」）
+WebをラップするアプリはAppleに「ただのサイト」と見なされるとリジェクトされる。本アプリの反論材料：
+- **オフラインで完全動作**（Webを同梱・Service Workerでキャッシュ。機内モードで実演可）
+- 274テーマ・約2,500問の独自DBと学習機能（○×採点・弱点補強・忘却曲線）＝閲覧サイトではない
+- IAPあり＝ネイティブ機能を使用
 
-## 6. ⚠️ 審査リスク（最重要）— ガイドライン4.2「最低限の機能」
-PWABuilderのiOSは Web をラップする方式のため、**「ただのWebサイトの埋め込み」と見なされると4.2でリジェクト**されることがあります。本アプリは下記の点で「アプリらしさ」があり通る可能性は高いですが、リジェクト時の対策も用意しておきます。
+それでもリジェクトされたら：**ローカル通知で「今日の復習リマインド」を追加**（`npm i @capacitor/local-notifications`）。“ネイティブならでは”の機能が1つ加わり4.2を満たしやすい。
 
-通りやすくする/反論材料：
-- **オフラインで完全動作**（Service Workerで全データキャッシュ。機内モードで起動して見せられる）
-- 大量の独自コンテンツ（274テーマ・約2,500問）と学習機能（○×採点・弱点補強・忘却曲線）= 単なるサイト閲覧ではない
-- ネイティブの共有/外部ブラウザ送りが無く、アプリ内で完結
+## 8. スクリーンショット
+- 必須：**6.7インチ（1290×2796）** 最低1枚。`screenshots/home.png` を用意済み。
+- 推奨＝iOS Simulatorで `⌘S`：①ホーム ②比較表(赤シート) ③○×問題 ④弱点補強 ⑤ペイウォール（課金IAPの審査用にも使える）。
 
-リジェクトされた場合の打ち手（順に）：
-1. 審査メモに「オフライン学習アプリであること・独自の問題DBと学習機能」を明記して再申請
-2. それでも×なら **Capacitor** で包み直す（プッシュ通知や端末機能を1つ足すと4.2を満たしやすい）。例：ローカル通知で「今日の復習リマインド」を実装すると“ネイティブならでは”の機能になる
-3. 最終手段：簡単なオンボーディング/設定画面などネイティブUIを1枚足す
-
-> まずはPWABuilder方式で提出 → リジェクトされたらCapacitor＋ローカル通知、の二段構えが現実的。
-
-## 7. スクリーンショット（App Store提出に必須）
-- 必須サイズ：**6.7インチ（1290×2796）** 最低1枚（3〜5枚推奨）。本リポ `screenshots/home.png` に横断テーマ一覧を用意済み。
-- **推奨＝iOS Simulatorで撮影**（実機枠・ステータスバー込みで綺麗）：
-  1. Xcodeでシミュレータ（iPhone 15 Pro Max等）を起動しアプリを動かす
-  2. 撮りたい画面で `⌘S`（または File→Save Screen）
-  3. 撮るべき4枚：①ホーム（テーマ一覧）②テーマの比較表（赤シート）③○×問題の画面 ④弱点補強タブ
-- 端末の縦横比に合っていれば、装飾なしのベタ画面でも審査は通ります。
-
-## 8. 提出後
-- 審査は通常24〜48時間。
-- 公開後の中身更新（問題追加・修正）は**PWA側をpushすれば即反映**（WebViewが読むため、軽微な更新は再審査不要）。アプリ枠の機能変更時のみ再ビルド・再審査。
+## 9. 公開後の更新
+- **Web同梱方式なので、問題の追加・修正はアプリの再ビルド・再申請が必要**（content.jsを更新→§2のcp→cap sync→Archive）。
+- 「審査なしで即反映したい」場合は将来、`capacitor.config` の `server.url` でGitHub Pagesを読む“ハイブリッド”に切替も可（ただしオフライン性と4.2耐性は同梱方式が有利）。
 
 ---
 ### チェックリスト
-- [ ] Apple Developer 登録（本人）
-- [ ] PWABuilderでiOSパッケージ生成
-- [ ] Xcodeで署名・アーカイブ・アップロード
-- [ ] App Store Connectでアプリ作成（名前/カテゴリ/年齢/価格）
-- [ ] プライバシーポリシーURL設定（privacy.html）
-- [ ] App プライバシー＝データ収集なし
-- [ ] スクショ4枚（Simulator推奨）
-- [ ] 掲載コピー入力（§5）
-- [ ] 審査提出 → 4.2でリジェクトなら§6の二段構え
+- [ ] Apple Developer 登録（本人・$99/年）
+- [ ] Capacitorプロジェクト作成・www/ に Webを同梱・`npx cap add ios`
+- [ ] `cordova-plugin-purchase` 導入・`cap sync`
+- [ ] App Store Connectでアプリ作成＋**IAP非消費型 `pro_all_unlock`（¥980）**
+- [ ] Xcode：In-App Purchase capability・署名・1024pxアイコン
+- [ ] Sandboxで購入→解放→復元を確認
+- [ ] Archive→Upload／掲載コピー（§6）・スクショ・プライバシー
+- [ ] 審査提出 → 4.2でNGならローカル通知を追加して再申請
