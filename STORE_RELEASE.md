@@ -64,7 +64,7 @@ npx cap open ios   # Xcodeが開く
 ```
 - Signing & Capabilities → Team に自分のApple Developerを設定（自動署名）／Bundle Id を §2 に。
 - ＋ Capability → **In-App Purchase** を追加。
-- アイコン：`Assets.xcassets > AppIcon` に **1024px**（`~/Downloads/アプリアイコン.png`）を入れる。
+- アイコン：`Assets.xcassets > AppIcon` に **1024px・アルファ無し**の `icons/appstore-1024.png`（リポジトリ同梱・透過チャネル除去済。App Store Connectはアルファ付きアイコンを弾く）を入れる。元デザインは `~/Downloads/アプリアイコン.png`。
 - シミュレータ/実機で動作確認：①機内モードでも起動・○×が出る ②ロックテーマでペイウォール ③Sandboxアカウントで購入→解放→「購入を復元」も動く（Sandboxは App Store Connect > ユーザーとアクセス > Sandbox で作成）。
 - Product → Archive → Distribute App → App Store Connect → Upload。
 

@@ -40,6 +40,34 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "横断テーマ一覧"
+    },
+    {
+      "src": "./screenshots/table.png",
+      "sizes": "1290x2796",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "横断比較表で違いを整理"
+    },
+    {
+      "src": "./screenshots/quiz.png",
+      "sizes": "1290x2796",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "過去問○×で実戦演習"
+    },
+    {
+      "src": "./screenshots/weak.png",
+      "sizes": "1290x2796",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "間違えた問題だけ弱点補強"
+    },
+    {
+      "src": "./screenshots/paywall.png",
+      "sizes": "1290x2796",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "3テーマ無料・買い切りで全解放"
     }
   ]
 }
