@@ -8786,15 +8786,7 @@ const CROSS_TOPICS = [
     "id": "jin-koreisha",
     "title": "高齢者（65歳・70歳の節目）",
     "tagline": "【人物横断】年齢の節目で各制度がどう変わるかを集約。65歳＝介護第1号・雇用は高年齢被保険者・老齢基礎年金（10年要件）／70歳＝厚年の被保険者資格喪失（以後は「70歳以上の使用される者」で在職老齢年金は対象・高齢任意加入も可）／75歳＝健保の被保険者でなくなり後期高齢者医療の被保険者へ。",
-    "subjects": [
-      "jinbutsu",
-      "konen",
-      "kenpo",
-      "koyo",
-      "kokunen",
-      "roippan",
-      "shaippan"
-    ],
+    "subjects": [ "jinbutsu" ],
     "voices": [
       {
         "subj": "jinbutsu",
@@ -8969,14 +8961,7 @@ const CROSS_TOPICS = [
     "id": "jin-gakusei",
     "title": "学生",
     "tagline": "「学生」が各制度でどう扱われるかを横断整理。国年＝学生納付特例（猶予され受給資格期間に算入、追納10年）／雇用＝昼間学生は適用除外／労災＝労働者なら学生でも適用／健保・厚年＝4分の3基準は学生でも適用するが、短時間労働者の特定適用4要件では「学生でない」が要件。",
-    "subjects": [
-      "jinbutsu",
-      "kokunen",
-      "konen",
-      "kenpo",
-      "koyo",
-      "rosai"
-    ],
+    "subjects": [ "jinbutsu" ],
     "voices": [
       {
         "subj": "jinbutsu",
@@ -9130,13 +9115,7 @@ const CROSS_TOPICS = [
     "id": "jin-gaikokuseki",
     "title": "外国人（日本国籍を有しない者）",
     "tagline": "【人物横断】社会保険は国籍を問わず適用（在留資格で適用）。短期在留で帰国する外国人には脱退一時金（被保険者期間6月以上・国年/厚年・出国＝最後に日本国内に住所を有しなくなった日から2年以内に請求・上限月数60＝令和3年4月〜）。合算対象期間（カラ期間）は日本国籍を有する者の海外在住期間が原則で、国内居住の外国籍者の期間は永住許可等を受けた後でなければ対象外。社会保障協定で二重加入防止・期間通算（協定により対象範囲が異なり医療保険を含むものもある）。",
-    "subjects": [
-      "jinbutsu",
-      "kokunen",
-      "konen",
-      "roippan",
-      "shaippan"
-    ],
+    "subjects": [ "jinbutsu" ],
     "voices": [
       {
         "subj": "jinbutsu",
@@ -9281,11 +9260,7 @@ const CROSS_TOPICS = [
     "id": "jin-setainushi",
     "title": "世帯主",
     "tagline": "【人物横断】世帯を代表する「世帯主」の社会保険上の役割を集約。国保＝保険料の納付義務者は世帯主（市町村は世帯主から徴収。ただし国保組合は組合員）。国年＝第1号被保険者の保険料について世帯主・配偶者は連帯納付義務を負い、申請免除は世帯主・配偶者も所得要件を満たす必要がある（法定免除は所得不問）。届出＝国年・国保・後期高齢とも世帯主は被保険者に代わって（又は世帯主自身が）資格取得・喪失等の届出ができる。",
-    "subjects": [
-      "jinbutsu",
-      "shaippan",
-      "kokunen"
-    ],
+    "subjects": [ "jinbutsu" ],
     "voices": [
       {
         "subj": "jinbutsu",
