@@ -1,7 +1,7 @@
 /*
  * アプリ本体(画面遷移とロジック)
  * ----------------------------------------------------------------------------
- * 依存: content.js / srs.js / storage.js / charts.js (この順に読み込む)
+ * 依存: content.js / srs.js / storage.js / import.js (この順に読み込む)
  * ----------------------------------------------------------------------------
  */
 (function () {
@@ -233,7 +233,7 @@
             <div class="prio-title">${r.t.title}</div>
             <div class="subj-tags">${r.t.subjects.map(subjTag).join('')}</div>
           </td>
-          <td class="prio-stat">${isLocked(r.t.id) ? '<span class="pill lock">🔒</span>' : `<span class="pill">${r.t.cards.length}問</span>`}</td>
+          <td class="prio-stat">${isLocked(r.t.id) ? '<span class="pill lock">🔒</span>' : (r.t.cards.length ? `<span class="pill">${r.t.cards.length}問</span>` : '<span class="pill pill-tbl">表</span>')}</td>
         </tr>`).join('');
 
     view.innerHTML = `
@@ -369,10 +369,13 @@
           }).join('')}
         </div>` : ''}
       </div>
-      <button class="btn-primary big" id="study-topic">一問一答を解く(${topic.cards.length}問)</button>`;
+      ${topic.cards.length
+        ? `<button class="btn-primary big" id="study-topic">一問一答を解く(${topic.cards.length}問)</button>`
+        : '<p class="muted small" style="text-align:center;margin-top:14px">このテーマは比較表で整理する内容です（一問一答はありません）。</p>'}`;
 
     $('#back').addEventListener('click', () => { scrollToTopic = topic.id; go(lastOrigin); });
-    $('#study-topic').addEventListener('click', () => go('review', { topic: topic.id }));
+    const stBtn = $('#study-topic');
+    if (stBtn) stBtn.addEventListener('click', () => go('review', { topic: topic.id }));
 
     // 赤シート(答えを隠す/タップで表示)
     if (topic.table) {
@@ -394,7 +397,7 @@
   function topicCardHTML(t, now) {
     return `
       <div class="topic-card" data-topic="${t.id}">
-        <div class="topic-head"><h3>${t.title}</h3><span class="pill">${t.cards.length}問</span></div>
+        <div class="topic-head"><h3>${t.title}</h3>${t.cards.length ? `<span class="pill">${t.cards.length}問</span>` : '<span class="pill pill-tbl">表</span>'}</div>
         <div class="subj-tags">${t.subjects.map(subjTag).join('')}</div>
       </div>`;
   }
@@ -473,19 +476,6 @@
     for (const [re, id] of LAW_CHARS) if (re.test(t)) return id;
     return null;
   }
-  // 法律キャラ名簿(トップページの図鑑用)
-  const LAW_CHARACTERS = [
-    { id: 'kijun', name: '基島規子', law: '労基' },
-    { id: 'anei', name: '守谷衛', law: '安衛' },
-    { id: 'rosai', name: '災堂咲', law: '労災' },
-    { id: 'koyo', name: '職田めぐみ', law: '雇用' },
-    { id: 'choshu', name: '収沢徴子', law: '徴収' },
-    { id: 'kenpo', name: '保科碧', law: '健保' },
-    { id: 'konen', name: '厚見年実', law: '厚年' },
-    { id: 'kokunen', name: '国原みのり', law: '国年' },
-    { id: 'roippan', name: '労井美樹', law: '労一' },
-    { id: 'shaippan', name: '市役あい', law: '社一' },
-  ];
 
   // 表の「答え列」を左から順に色分けする(例: 5年=青 / 2年=橙 / 時効にかからない=灰)
   const COL_ACCENTS = ['#2563eb', '#d97706', '#0891b2', '#16a34a'];
@@ -797,6 +787,8 @@
       session.graded = true;
     }
     session.answered = { choice, correct };
+    const live = document.getElementById('sr-live');
+    if (live) live.textContent = correct ? '正解です' : `不正解です。正答は ${oxAnswer(item.card)}`;
     drawReview();
   }
 
@@ -995,137 +987,6 @@
     URL.revokeObjectURL(url);
   }
 
-  // ============================ 記憶の宮殿 ==================================
-  function renderPalace() {
-    const view = $('#view');
-    const byId = {};
-    topics().forEach((t) => { byId[t.id] = t; });
-    const rooms = (window.SHARO.PALACE || []).filter((r) => byId[r.topic]);
-    view.innerHTML = `
-      <button class="link-back" id="back">← テーマ一覧</button>
-      <section class="hero compact">
-        <h2>🏰 記憶の宮殿</h2>
-        <p class="muted">家の中を順に歩きながら、各「場所」に紐づく単元を思い出そう。場所→中身の順序が想起の手がかりになります。</p>
-      </section>
-      <div class="palace">
-        ${rooms.map((r, i) => `
-          <button class="palace-room" data-topic="${r.topic}">
-            <span class="palace-num">${i + 1}</span>
-            <span class="palace-body">
-              <span class="palace-place">${r.place}</span>
-              <span class="palace-hook">${r.hook}</span>
-              <span class="palace-topic">→ ${byId[r.topic].title}</span>
-            </span>
-          </button>`).join('')}
-      </div>`;
-    $('#back').addEventListener('click', () => go('cross'));
-    $$('.palace-room', view).forEach((el) =>
-      el.addEventListener('click', () => go('cross', { topic: el.dataset.topic })));
-  }
-
-  // ============================ 全員のキャラ紹介 ===========================
-  // サブ制度のキャラ(男性。トップ図鑑には出さないが紹介ページには載せる)
-  const SUB_CHARACTERS = [
-    { id: 'shain',   label: '船員保険' },
-    { id: 'hiyatoi', label: '日雇労働者(雇用保険の特例)' },
-    { id: 'kokka',   label: '国家公務員共済' },
-    { id: 'chiho',   label: '地方公務員共済' },
-    { id: 'shigaku', label: '私学共済' },
-  ];
-  function renderCharIntro() {
-    const view = $('#view');
-    const card = (id, name, law, color) =>
-      `<div class="ci-card">
-        <img src="./icons/chars/${id}.png" style="border-color:${color || '#cbd5e1'}" onerror="this.style.display='none'" alt="">
-        <div class="ci-body"><div class="ci-name">${name}</div><div class="ci-law">${law}</div></div>
-      </div>`;
-    view.innerHTML = `
-      <button class="link-back" id="back">← ホーム</button>
-      <section class="hero compact">
-        <h2>📚 法律キャラ図鑑</h2>
-        <p class="muted">各科目を擬人化したキャラクター。比較表の列ヘッダーや記憶の宮殿にも登場します。</p>
-      </section>
-      <div class="char-intro-grid">
-        ${LAW_CHARACTERS.map((c) => card(c.id, c.name, SUBJECTS[c.id] ? SUBJECTS[c.id].name : c.law, SUBJECTS[c.id] && SUBJECTS[c.id].color)).join('')}
-      </div>
-      <div class="ci-sub-head">サブ制度のキャラ</div>
-      <div class="char-intro-grid">
-        ${SUB_CHARACTERS.map((c) => card(c.id, c.label, 'サブ制度', '#94a3b8')).join('')}
-      </div>`;
-    $('#back').addEventListener('click', () => go('home'));
-  }
-
-  // ============================ ルーティング ================================
-  // ============================ 覚え方(記憶の宮殿) =========================
-  function renderMemoryGuide() {
-    const view = $('#view');
-    view.innerHTML = `
-      <section class="hero compact">
-        <h2>🏰 記憶の宮殿で覚える</h2>
-        <p class="muted">場所と"ありえない絵"で、社労士の暗記を定着させる方法</p>
-      </section>
-
-      <div class="card-box char-gallery">
-        <h3 class="char-gallery-title" id="open-chars">法律キャラ図鑑<span class="char-more">ぜんいん見る →</span></h3>
-        <div class="char-row">
-          ${LAW_CHARACTERS.map((c) =>
-            `<div class="char-item"><img src="./icons/chars/${c.id}.png" style="border-color:${SUBJECTS[c.id] ? SUBJECTS[c.id].color : '#cbd5e1'}" alt=""><span class="char-law">${c.law}</span><span class="char-name">${c.name}</span></div>`).join('')}
-        </div>
-      </div>
-
-      <div class="card-box">
-        <h3>記憶の宮殿とは</h3>
-        <p class="mg-text">古代から使われる記憶術(場所法／メソッド・オブ・ロサイ)。よく知っている場所(自宅など)を決まった順路で歩き、覚えたいことを各場所に"絵"として置きます。あとで頭の中で同じ順路を歩けば、絵が手がかりになって思い出せます。脳は「場所」の記憶が得意なので、その力に暗記を相乗りさせる仕組みです(研究でも長期の記憶向上が確認されています)。</p>
-      </div>
-
-      <div class="card-box">
-        <h3>作り方(4ステップ)</h3>
-        <ol class="mg-steps">
-          <li><b>場所を選ぶ</b> … 自宅・通学路など、目をつぶって歩ける場所。</li>
-          <li><b>順路を固定</b> … 玄関→廊下→居間…と、いつも同じ順に進む。</li>
-          <li><b>絵を置く</b> … 各場所に、覚える内容を"ありえない絵"にして置く。</li>
-          <li><b>歩いて復習</b> … 順路を何度か歩く。間隔をあけて見直すと長期記憶に。</li>
-        </ol>
-      </div>
-
-      <div class="card-box">
-        <h3>効果を上げるコツ</h3>
-        <ul class="mg-list">
-          <li>🔍 <b>誇張</b> … 巨大化・大量化など、ありえない大きさに。</li>
-          <li>🎬 <b>動き</b> … 止まった絵より、動いている絵のほうが残る。</li>
-          <li>😂 <b>感情・ユーモア</b> … 笑える・驚く・気持ち悪いほど忘れない。</li>
-          <li>👂 <b>五感</b> … 音・におい・手ざわりも一緒に想像する。</li>
-          <li>🧵 <b>物語でつなぐ</b> … 場所から場所へ、流れのある一本のストーリーに。</li>
-          <li>🚪 <b>1部屋1テーマ</b> … 詰め込みすぎず、場所どうしは少し離す。</li>
-        </ul>
-      </div>
-
-      <div class="card-box">
-        <h3>🟥 赤シートを伏せる理由（アクティブリコール）</h3>
-        <p class="mg-text">このアプリで答えを赤シートで隠すのは、<b>アクティブリコール（積極的想起）</b>を使うためです。答えをただ眺めて覚えるより、<b>「思い出そうと一生懸命がんばること」そのもの</b>が記憶を強く定着させます。これは多くの研究でも確認されている、暗記のいちばんの近道です。</p>
-        <ul class="mg-list">
-          <li>⏳ <b>すぐ答えを見ない</b> … まず数秒、自力で思い出そうと粘る。その「思い出す負荷」が効きます。</li>
-          <li>✍️ <b>間違えてOK</b> … 思い出そうとした努力があれば、外しても次はより強く残ります。</li>
-          <li>🔁 <b>思い出す→確認をくり返す</b> … 赤シートと○×で「思い出す練習」を反復するのが定着の王道です。</li>
-        </ul>
-      </div>
-
-      <div class="card-box mg-apply">
-        <h3>社労士試験への応用</h3>
-        <ul class="mg-list">
-          <li><b>横断の比較表を"家"に配置</b> … 「適用事業所」なら、玄関の表札＝法人(無条件で強制)、廊下の行列＝17業種、居間の5脚の椅子＝5人以上…のように各部屋へ。各テーマの 💡要点 にある<b>「🏰記憶の宮殿で覚える(一例)」</b>がその見本です。</li>
-          <li><b>数字を場所＋語呂で</b> … 人数・日数・率(700人/3,000人、14日以内、4分の3 等)は、置き場所と語呂をセットにすると混同しにくい。</li>
-          <li><b>数字はシンボル(形)に変える</b> … 覚えにくい数字は、形の似たモノに置き換えて"絵"にします(例: 1=ろうそく🕯 / 2=白鳥🦢 / 3=耳👂 / 4=ヨット⛵ / 5=フック / 8=雪だるま⛄ / 0=ボール⚽)。「常時5人以上」なら壁にフックが5本、「14日以内」ならカレンダーに石(14=いし)…のように、数字をモノの絵にして場所に置くと、人数・日数・率が混同しにくくなります。</li>
-          <li><b>赤シート＋アクティブリコール</b> … まず宮殿で全体像を作り、横断表の赤シートと各テーマの一問一答(○×)で思い出す練習を繰り返す。間違えた問題は「弱点補強」タブに集まるので、そこで重点復習する。</li>
-          <li><b>忘却曲線で復習</b> … このアプリの出題間隔(間隔反復)に合わせて宮殿を歩き直すと、本試験まで保持できます。</li>
-        </ul>
-      </div>
-
-      <button class="btn-primary big" id="mg-cross">🔀 横断テーマで宮殿の一例を見る</button>`;
-    const openChars = $('#open-chars');
-    if (openChars) openChars.addEventListener('click', () => go('chars'));
-    $('#mg-cross').addEventListener('click', () => go('cross'));
-  }
 
   // 使い方・お問い合わせ・プライバシーポリシー(アプリストア提出に必要な情報を含む)
   const SUPPORT_EMAIL = 'info@houday.jp';
@@ -1234,8 +1095,13 @@
 
   function go(route, params) {
     document.onkeydown = null;
+    if (!ROUTES[route]) { route = 'home'; params = undefined; } // 未登録ルートは白画面化させずホームへ
     currentRoute = route; currentParams = params;
-    $$('.nav-item').forEach((n) => n.classList.toggle('active', n.dataset.route === route));
+    $$('.nav-item').forEach((n) => {
+      const on = n.dataset.route === route;
+      n.classList.toggle('active', on);
+      if (on) n.setAttribute('aria-current', 'page'); else n.removeAttribute('aria-current');
+    });
     window.scrollTo(0, 0);
     ROUTES[route](Date.now(), params);
   }

@@ -784,3 +784,31 @@ table.cmp th:first-child { text-align: left; }
 .nav-item .ni-ico{ transition: filter .2s, transform .2s; }
 /* ヘッダーロゴ：影をブランド色で締める */
 .logo{ box-shadow: 0 4px 12px rgba(15,23,42,.18); }
+
+/* ============================================================================
+   アクセシビリティ・補助クラス（リリース前QAで追加）
+   ============================================================================ */
+/* スクリーンリーダー専用（視覚的に非表示・読み上げのみ） */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+/* キーボード/スイッチ操作時のみフォーカスリングを表示（マウス・タップでは出ない） */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+/* 初回起動スプラッシュ（JSが描画完了すると置き換わる） */
+.boot-splash {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; min-height: 46vh; color: var(--muted);
+}
+.boot-splash img { border-radius: 14px; opacity: .92; }
+.boot-splash p { margin: 0; font-size: 13px; }
+/* 一問一答が無い（比較表のみ）テーマのピル */
+.pill.pill-tbl { background: #eef2f7; color: var(--muted); }
+[data-theme="dark"] .pill.pill-tbl { background: #1d2a44; color: #94a3b8; }

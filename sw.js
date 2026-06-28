@@ -1,5 +1,5 @@
 /* Service Worker — オフラインでも使えるよう静的アセットをキャッシュ */
-const CACHE = 'sharo-v779';
+const CACHE = 'sharo-v780';
 const ASSETS = [
   './',
   './index.html',
@@ -12,10 +12,25 @@ const ASSETS = [
   './js/content.js',
   './js/srs.js',
   './js/storage.js',
-  './js/charts.js',
   './js/import.js',
   './js/app.js',
   './js/billing.js',
+  // 科目マスコット(runtime参照・初回オフラインでも表示できるようprecache)
+  './icons/chars/anei.png',
+  './icons/chars/chiho.png',
+  './icons/chars/choshu.png',
+  './icons/chars/hiyatoi.png',
+  './icons/chars/kenpo.png',
+  './icons/chars/kijun.png',
+  './icons/chars/kokka.png',
+  './icons/chars/kokunen.png',
+  './icons/chars/konen.png',
+  './icons/chars/koyo.png',
+  './icons/chars/roippan.png',
+  './icons/chars/rosai.png',
+  './icons/chars/shain.png',
+  './icons/chars/shaippan.png',
+  './icons/chars/shigaku.png',
 ];
 
 self.addEventListener('install', (e) => {
@@ -30,14 +45,34 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// ネットワーク優先(常に最新を取得、取得できたら保存)。オフライン時のみキャッシュにフォールバック
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const req = e.request;
+
+  // HTMLナビゲーションはネットワーク優先(常に最新)。オフライン時はキャッシュへフォールバック
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put('./index.html', copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then((hit) => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+
+  // 静的アセット(content.js等の版固定資産)はキャッシュ優先＝起動ごとの再取得・再パースを回避。
+  // 裏で更新があれば取得してキャッシュ更新(stale-while-revalidate)。配信はCACHE名のバージョンで管理。
   e.respondWith(
-    fetch(e.request).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(e.request, copy)).catch(() => {});
-      return res;
-    }).catch(() => caches.match(e.request).then((hit) => hit || caches.match('./index.html')))
+    caches.match(req).then((hit) => {
+      const fetching = fetch(req).then((res) => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        }
+        return res;
+      }).catch(() => hit);
+      return hit || fetching;
+    })
   );
 });
